@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 openssl req -new -x509 -days 9999 -config ./cert-configs/ca.cnf -keyout ./certs/ca-key.pem -out ./certs/ca-crt.pem
 openssl genrsa -out ./certs/server-key.pem 4096
 openssl req -new -config ./cert-configs/server.cnf -key ./certs/server-key.pem -out ./certs/server-csr.pem
