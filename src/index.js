@@ -17,6 +17,7 @@ type Options = {
   httpUrl?: string,
   store?: Conf,
   port?: number,
+  unsecure?: boolean,
 }
 
 const start = async (opts: Options) => {
@@ -37,7 +38,7 @@ const start = async (opts: Options) => {
   // Set subscriptions for stored convos
   await subscribeToStoredConvos(pss, db)
   // Start the BZZ and GraphQL server
-  await createServer(pss, db, httpUrl, port)
+  await createServer(pss, db, httpUrl, port, !opts.unsecure)
 }
 
 export default start
