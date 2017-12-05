@@ -2,13 +2,12 @@
 
 import debug from 'debug'
 import type { PSS } from 'erebos'
-import bodyParser from 'body-parser'
 import https from 'https'
 import http from 'http'
 import fs from 'fs'
 import express from 'express'
+import cors from 'cors'
 import path from 'path'
-import { graphiqlExpress, graphqlExpress } from 'apollo-server-express'
 
 import type DB from './db'
 import createBzzRoutes from './bzz'
@@ -23,16 +22,14 @@ export default (
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const log = debug('onyx:server')
-    const bzzRoutes = createBzzRoutes(httpUrl)
-    const graphql = graphqlServer(pss, db, port)
 
-    let app = express()
+    const app = express()
+    app.use(cors())
 
-    app.use('/graphql', bodyParser.json(), graphqlExpress({ schema: graphql.schema }))
-    app.use('/graphiql', graphiqlExpress({
-      endpointURL: '/graphql',
-    }))
+    const graphql = graphqlServer(pss, db, port, app)
+    createBzzRoutes(httpUrl, app)
 
+    let server
     if (useTLS) {
       const options: { [string]: any } = {
         requestCert: true,
@@ -49,17 +46,17 @@ export default (
         )
         throw err
       }
-      app = https.createServer(options, app)
+      server = https.createServer(options, app)
     } else {
-      app = http.createServer(app)
+      server = http.createServer(app)
     }
 
-    app.listen(port, 'localhost', (err) =>  {
+    server.listen(port, 'localhost', (err) =>  {
       if (err) {
         reject(err)
       } else {
         log(`running on port ${port}`)
-        graphql.onCreated(app)
+        graphql.onCreated(server)
         resolve()
       }
     })

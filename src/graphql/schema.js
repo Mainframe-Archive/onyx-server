@@ -25,7 +25,7 @@ scalar JSON
 
 type Profile {
   id: ID!
-  avatar: String
+  avatarSwarmHash: String
   name: String
   bio: String
 }
@@ -78,8 +78,8 @@ type File {
 }
 
 input ProfileInput {
-  avatar: String
-  name: String!
+  avatarSwarmHash: String
+  name: String
   bio: String
 }
 
