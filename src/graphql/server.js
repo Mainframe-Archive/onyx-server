@@ -6,7 +6,6 @@ import debug from 'debug'
 import { execute, subscribe } from 'graphql'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import bodyParser from 'body-parser'
-import type { express$Application } from 'express'
 import { graphiqlExpress, graphqlExpress } from 'apollo-server-express'
 
 import type DB from '../db'

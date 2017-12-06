@@ -14,7 +14,7 @@ export type ID = string
 
 export type Profile = {
   id: ID, // base64-encoded public key
-  avatarSwarmHash?: ?string,
+  avatar?: ?string, // Swarm hash
   name?: ?string,
   bio?: ?string,
 }
