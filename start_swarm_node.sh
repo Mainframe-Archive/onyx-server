@@ -15,14 +15,14 @@ mkdir -p "$EXT_DEPS_DIR"
 if [[ ! -e $GODIR ]]; then
     echo "cloning the go-ethereum repo"
     cd "$EXT_DEPS_DIR"
-    git clone https://github.com/nolash/go-ethereum.git
+    git clone https://github.com/MainframeHQ/go-ethereum.git
 fi
 
 cd "$GODIR"
 # doing the fetch here and now makes sure that we can change the chosen
 # commit hash without the risk of breaking the script
 git fetch
-git checkout 8bdcd40bc2e04533862be901b604cea886cca383
+git checkout onyx-0.1
 make geth
 make swarm
 
