@@ -1,0 +1,8 @@
+[Unit]
+Description=Lazily creating an account and running swarm in the background
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/home/ubuntu/run-swarm.sh /home/ubuntu/user_data
+Restart=always
