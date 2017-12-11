@@ -1,6 +1,6 @@
 {
   "name": "onyx-server",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "PSS mailboxing service",
   "repository": "git@github.com:MainframeHQ/onyx-server.git",
   "author": "Mainframe",
@@ -49,7 +49,7 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "del-cli": "^1.1.0",
-    "flow-bin": "^0.60.1",
+    "flow-bin": "^0.61.0",
     "flow-copy-source": "^1.2.1",
     "prettier": "^1.9.1"
   }
