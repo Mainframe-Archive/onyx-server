@@ -1,0 +1,62 @@
+{
+    "variables": {
+        "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+        "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+        "region": "eu-west-1",
+        "datadir": "/home/ubuntu/user_data"
+    },
+    "builders": [
+        {
+            "access_key": "{{user `aws_access_key`}}",
+            "ami_name": "onyx-server-{{timestamp}}",
+            "instance_type": "m3.medium",
+            "region": "eu-west-1",
+            "secret_key": "{{user `aws_secret_key`}}",
+            "source_ami": "ami-8fd760f6",
+            "ssh_username": "ubuntu",
+            "type": "amazon-ebs",
+            "associate_public_ip_address": true
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir -p {{ user `datadir` }}",
+                "mkdir -p /home/ubuntu/geth_binaries"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "./welcome.txt",
+            "destination": "/home/ubuntu/"
+        },
+        {
+            "type": "file",
+            "source": "./build_swarm_binaries.sh",
+            "destination": "/home/ubuntu/"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "ls -al /home/ubuntu",
+                "cat /home/ubuntu/welcome.txt",
+                "pwd"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo add-apt-repository -y ppa:longsleep/golang-backports",
+                "sudo apt update",
+                "sudo apt-get install -y golang-go jq"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "./build_swarm_binaries.sh {{ user `datadir` }}"
+            ]
+        }
+    ]
+}
