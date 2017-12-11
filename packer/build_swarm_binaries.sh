@@ -24,7 +24,7 @@ cd "$GODIR"
 # doing the fetch here and now makes sure that we can change the chosen
 # commit hash without the risk of breaking the script
 git fetch
-git checkout onyx-0.1
+git checkout onyx-0.4
 make geth
 make swarm
 
