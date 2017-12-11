@@ -28,8 +28,8 @@ git checkout onyx-0.1
 make geth
 make swarm
 
-cp geth /home/ubuntu/geth_binaries
-cp geth /home/ubuntu/geth_binaries
+cp build/bin/geth /home/ubuntu/geth_binaries
+cp build/bin/swarm /home/ubuntu/geth_binaries
 
 # if [[ ! -e $DATADIR/keystore ]]; then
 #   mkdir -p $DATADIR
