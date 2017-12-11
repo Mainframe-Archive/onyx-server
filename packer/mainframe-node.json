@@ -58,7 +58,9 @@
                 "./build_swarm_binaries.sh",
                 "rm -rf /home/ubuntu/external_deps/go-ethereum",
                 "sudo cp /home/ubuntu/services/swarm.service /etc/systemd/system/",
-                "tree /home/ubuntu"
+                "tree /home/ubuntu",
+                "sudo systemctl enable swarm.service",
+                "sudo systemctl start swarm.service"
             ]
         }
     ]
