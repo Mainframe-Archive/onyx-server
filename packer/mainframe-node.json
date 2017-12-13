@@ -3,7 +3,8 @@
         "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
         "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
         "region": "eu-west-1",
-        "datadir": "/home/ubuntu/user_data"
+        "datadir": "/home/ubuntu/user_data",
+        "onyx_server_version": "0.4.2"
     },
     "builders": [
         {
@@ -55,12 +56,17 @@
         {
             "type": "shell",
             "inline": [
+                "# swarm",
                 "./build_swarm_binaries.sh",
                 "rm -rf /home/ubuntu/external_deps/go-ethereum",
-                "sudo cp /home/ubuntu/services/swarm.service /etc/systemd/system/",
+                "# onyx",
+                "sudo sudo npm install --global onyx-server@{{ user `onyx_server_version` }}",
+                "sudo chown -R ubuntu:ubuntu /home/ubuntu/.config",
+                "# services",
+                "sudo cp /home/ubuntu/services/* /etc/systemd/system/",
                 "tree /home/ubuntu",
                 "sudo systemctl enable swarm.service",
-                "sudo systemctl start swarm.service"
+                "sudo systemctl enable onyx.service"
             ]
         }
     ]

@@ -1,11 +1,11 @@
 [Unit]
-Description=Swarm PSS Service
+Description=Onyx Server Service
 After=default.target
 
 [Service]
 Type=simple
 User=ubuntu
-ExecStart=/home/ubuntu/run-swarm.sh /home/ubuntu/user_data
+ExecStart=/home/ubuntu/run-onyx-server.sh
 Restart=always
 
 [Install]

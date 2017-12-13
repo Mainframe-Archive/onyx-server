@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 # taken from https://github.com/MainframeHQ/onyx-server/blob/master/start_swarm_node.sh
 
 if [[ $# -ne 1 ]]; then
