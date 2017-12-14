@@ -21,7 +21,7 @@ if [[ ! -e $CERTS_DIR ]]; then
     ONYX_DIR="$(npm root -g)/onyx-server"
 
     pushd "$HOME_DIR"
-    "$ONYX_DIR/scripts/gen-certs.sh"
+    "$ONYX_DIR/scripts/gen-certs.sh" -i "$PUBLIC_IP" -d "$PUBLIC_HOSTNAME"
     popd
 fi
 
