@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 set -x
 
-SLEEP_TIME=20
+POLLING_TIME=1
 HOME_DIR="/home/ubuntu"
 CERTS_DIR="$HOME_DIR/certs"
 # these should come out empty if the host doesn't have a public ip/hostname
 PUBLIC_IP=$(curl -f --silent http://169.254.169.254/latest/meta-data/public-ipv4)
 PUBLIC_HOSTNAME=$(curl -f --silent http://169.254.169.254/latest/meta-data/public-hostname)
 
-echo "giving swarm $SLEEP_TIME seconds to start up"
-sleep "$SLEEP_TIME"
+until netstat -l | grep ":8546 "
+do
+    echo "swarm not up yet, waiting another $POLLING_TIME seconds"
+    sleep "$POLLING_TIME"
+done
+
+sleep 1
+
 
 if [[ ! -e $CERTS_DIR ]]; then
-  ONYX_DIR="$(npm root -g)/onyx-server"
+    ONYX_DIR="$(npm root -g)/onyx-server"
 
-  pushd "$HOME_DIR"
-  "$ONYX_DIR/scripts/gen-certs.sh"
-  popd
+    pushd "$HOME_DIR"
+    "$ONYX_DIR/scripts/gen-certs.sh"
+    popd
 fi
 
 echo "starting onyx-server"
