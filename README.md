@@ -1,6 +1,6 @@
 # Mainframe node
 
-Prototype for the Mainframe node. A Mainframe node consists of a blockchain node plus additional services required for reliable messaging, including mailboxing and contact management.
+A Mainframe node consists of a blockchain node plus additional services required for reliable messaging, including mailboxing and contact management.
 
 ## Prerequisites
 
