@@ -79,7 +79,7 @@ it in the right vpc. Set the following group rules:
 Go to [subnet management](https://eu-west-1.console.aws.amazon.com/vpc/home?region=eu-west-1#subnets:)
 in the AWS dashboard and create a new subnet in your VPC. Make sure it's within
 the vpc CIDR range. For example if the VPC CIDR is `10.0.0.0/16`, the sg
-IPv4 CIDR block can be `10.0.0.1/24`.
+IPv4 CIDR block can be `10.0.1.0/24`.
 
 #### 3. Create an SSH key
 You're going to use it to connect to the Onyx Server EC2 node.
