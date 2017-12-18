@@ -1,13 +1,15 @@
 // @flow
 
+import debug from 'debug'
 import { randomBytes } from 'crypto'
-import { decodeMessage, encodeMessage, type topic } from 'erebos'
+import { decodeHex, encodeHex, type hex } from 'erebos'
 import { isObject, isString } from 'lodash'
 
-import type { ID, MessageBlock, Profile } from '../db'
+import type { MessageBlock, Profile } from '../db'
 
 const NONCE_SIZE = 8
 const receivedNonces: Set<string> = new Set()
+const log = debug('onyx:pss:protocol')
 
 const createNonce = () => Buffer.from(randomBytes(NONCE_SIZE)).toString('hex')
 
@@ -21,21 +23,21 @@ export type ProtocolType =
   | 'TOPIC_TYPING' // In channel or p2p topic
 
 export type PeerInfo = {
-  address: string,
-  pubKey: ID,
+  address: hex,
+  pubKey: hex,
 }
 
 export type ChannelInvitePayload = {
-  topic: topic,
+  topic: hex,
   subject: string,
   peers: Array<PeerInfo>,
   dark: boolean,
 }
 
 export type ContactRequestPayload = {
-  address: string,
+  address: hex,
   profile: Profile,
-  topic: topic,
+  topic: hex,
 }
 
 export type ProfileResponsePayload = {
@@ -43,7 +45,7 @@ export type ProfileResponsePayload = {
 }
 
 export type TopicJoinedPayload = {
-  address: string,
+  address: hex,
   profile?: ?Profile,
 }
 
@@ -69,12 +71,12 @@ export type ProtocolEvent<T = ProtocolType, P = ProtocolPayload> = {
 }
 
 export type ReceivedEvent = ProtocolEvent<*, *> & {
-  sender: ID,
+  sender: hex,
 }
 
 export const decodeProtocol = (msg: string): ?ProtocolEvent<*, *> => {
   try {
-    const envelope = JSON.parse(decodeMessage(msg))
+    const envelope = JSON.parse(decodeHex(msg))
     if (
       isObject(envelope) &&
       envelope.nonce != null &&
@@ -82,26 +84,26 @@ export const decodeProtocol = (msg: string): ?ProtocolEvent<*, *> => {
       isString(envelope.payload.type)
     ) {
       if (receivedNonces.has(envelope.nonce)) {
-        console.warn('Duplicate message:', envelope)
+        log('Duplicate message:', envelope)
       } else {
         receivedNonces.add(envelope.nonce)
         return envelope.payload
       }
     } else {
-      console.warn('Unrecognised message format:', envelope)
+      log('Unrecognised message format:', envelope)
     }
   } catch (err) {
-    console.warn('Failed to decode protocol message:', msg, err)
+    log('Failed to decode protocol message:', msg, err)
   }
 }
 
-export const encodeProtocol = (data: ProtocolEvent<*, *>) => {
-  const envelope = {
-    nonce: createNonce(),
-    payload: data,
-  }
-  return encodeMessage(JSON.stringify(envelope))
-}
+export const encodeProtocol = (data: ProtocolEvent<*, *>) =>
+  encodeHex(
+    JSON.stringify({
+      nonce: createNonce(),
+      payload: data,
+    }),
+  )
 
 export type ChannelInviteEvent = ProtocolEvent<
   'CHANNEL_INVITE',
@@ -148,7 +150,7 @@ export type TopicJoinedEvent = ProtocolEvent<'TOPIC_JOINED', TopicJoinedPayload>
 
 export const topicJoined = (
   profile: ?Profile,
-  address?: string = '',
+  address?: hex = '',
 ): TopicJoinedEvent => ({
   type: 'TOPIC_JOINED',
   payload: { address, profile },

@@ -5,6 +5,7 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
+GIT_TAG="onyx-0.4"
 DATADIR="$1"
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 EXT_DEPS_DIR="$SCRIPTPATH/external_deps"
@@ -15,14 +16,14 @@ mkdir -p "$EXT_DEPS_DIR"
 if [[ ! -e $GODIR ]]; then
     echo "cloning the go-ethereum repo"
     cd "$EXT_DEPS_DIR"
-    git clone https://github.com/MainframeHQ/go-ethereum.git
+    git clone --depth 1 https://github.com/MainframeHQ/go-ethereum.git -b $GIT_TAG
 fi
 
 cd "$GODIR"
 # doing the fetch here and now makes sure that we can change the chosen
 # commit hash without the risk of breaking the script
-git fetch
-git checkout onyx-0.1
+git fetch --depth 1 origin $GIT_TAG
+git checkout $GIT_TAG
 make geth
 make swarm
 
@@ -46,9 +47,10 @@ $GODIR/build/bin/swarm \
     --password $DATADIR/password \
     --verbosity 4 \
     --bzzaccount $KEY \
+    --ens-api '' \
     --pss \
     --bzznetworkid 922 \
-    --bootnodes enode://e834e83b4ed693b98d1a31d47b54f75043734c6c77d81137830e657e8b005a8f13b4833efddbd534f2c06636574d1305773648f1f39dd16c5145d18402c6bca3@54.171.164.15:30399 \
+    --bootnodes enode://e834e83b4ed693b98d1a31d47b54f75043734c6c77d81137830e657e8b005a8f13b4833efddbd534f2c06636574d1305773648f1f39dd16c5145d18402c6bca3@52.51.239.180:30399 \
     --ws \
     --wsorigins '*'
 

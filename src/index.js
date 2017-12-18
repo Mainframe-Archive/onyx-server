@@ -18,11 +18,14 @@ type Options = {
   store?: Conf,
   port?: number,
   unsecure?: boolean,
+  certsDir?: string,
 }
 
 const start = async (opts: Options) => {
-  const httpUrl = opts.httpUrl || SWARM_HTTP_URL || 'http://localhost:8500'
+  const httpUrl = opts.httpUrl || SWARM_HTTP_URL || 'https://onyx-storage.mainframe.com'
   const wsUrl = opts.wsUrl || SWARM_WS_URL || 'ws://localhost:8546'
+  const certsDir = opts.certsDir || 'certs'
+
   let port = opts.port
   if (port == null) {
     port = ONYX_PORT == null ? 5000 : parseInt(ONYX_PORT, 10)
@@ -38,7 +41,8 @@ const start = async (opts: Options) => {
   // Set subscriptions for stored convos
   await subscribeToStoredConvos(pss, db)
   // Start the BZZ and GraphQL server
-  await createServer(pss, db, httpUrl, port, !opts.unsecure)
+  const server = await createServer(pss, db, httpUrl, port, !opts.unsecure, certsDir)
+  return server
 }
 
 export default start

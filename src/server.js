@@ -19,6 +19,7 @@ export default (
   httpUrl: string,
   port: number,
   useTLS: boolean,
+  certsDir: string,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const log = debug('onyx:server')
@@ -35,14 +36,15 @@ export default (
         requestCert: true,
         rejectUnauthorized: true,
       }
-
       try {
-        options.key = fs.readFileSync(path.join('certs', 'server-key.pem'))
-        options.cert = fs.readFileSync(path.join('certs', 'server-crt.pem'))
-        options.ca = fs.readFileSync(path.join('certs', 'ca-crt.pem'))
+        options.key = fs.readFileSync(path.join(certsDir, 'server-key.pem'))
+        options.cert = fs.readFileSync(path.join(certsDir, 'server-crt.pem'))
+        options.ca = fs.readFileSync(path.join(certsDir, 'ca-crt.pem'))
       } catch (err) {
         console.warn(
-          `error reading ssl certificates, please make sure to run the certificate generation script.\n ${err}`
+          `error reading ssl certificates, please make sure to run the certificate generation script.\n ${
+            err
+          }`,
         )
         throw err
       }
@@ -51,13 +53,13 @@ export default (
       server = http.createServer(app)
     }
 
-    server.listen(port, 'localhost', (err) =>  {
+    server.listen(port, useTLS ? '0.0.0.0' : 'localhost', err => {
       if (err) {
         reject(err)
       } else {
         log(`running on port ${port}`)
         graphql.onCreated(server)
-        resolve()
+        resolve(server)
       }
     })
   })

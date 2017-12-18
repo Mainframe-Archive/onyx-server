@@ -1,11 +1,11 @@
 {
   "name": "onyx-server",
-  "version": "0.2.1",
+  "version": "0.4.5",
   "description": "PSS mailboxing service",
-  "main": "lib/index.js",
   "repository": "git@github.com:MainframeHQ/onyx-server.git",
   "author": "Mainframe",
   "license": "MIT",
+  "main": "lib/index.js",
   "bin": {
     "onyx-server": "./bin/onyx-server"
   },
@@ -21,21 +21,23 @@
   },
   "dependencies": {
     "apollo-server-express": "^1.2.0",
+    "body-parser": "^1.18.2",
+    "commander": "^2.12.2",
     "conf": "^1.3.1",
     "cors": "^2.8.4",
     "debug": "^3.1.0",
-    "erebos": "^0.0.2",
+    "erebos": "^0.1.0",
     "express": "^4.16.2",
-    "graphql": "^0.10.5",
-    "graphql-subscriptions": "^0.5.4",
-    "graphql-tools": "^2.7.0",
+    "graphql": "^0.11.7",
+    "graphql-subscriptions": "^0.5.5",
+    "graphql-tools": "^2.12.0",
     "graphql-type-json": "^0.1.4",
     "ip": "^1.1.5",
     "lodash": "^4.17.4",
     "node-fetch": "^1.7.3",
     "raw-body": "^2.3.2",
-    "rxjs": "^5.5.0",
-    "subscriptions-transport-ws": "^0.8.3",
+    "rxjs": "^5.5.5",
+    "subscriptions-transport-ws": "^0.9.4",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
@@ -48,8 +50,8 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "del-cli": "^1.1.0",
-    "flow-bin": "^0.60.1",
+    "flow-bin": "^0.61.0",
     "flow-copy-source": "^1.2.1",
-    "prettier": "^1.8.2"
+    "prettier": "^1.9.1"
   }
 }
