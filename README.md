@@ -61,12 +61,12 @@ it in the right vpc. Set the following group rules:
 
 **Inbound**
 
-| Type            | Protocol | Port Range | Source    | Description              |
-| ---             | ---      |        --- | ---       | ---                      |
-| SSH (22)        | TCP      |         22 | 0.0.0.0/0 | SSH                      |
-| Custom TCP Rule | TCP      |      30399 | 0.0.0.0/0 | swarm TCP                |
-| Custom TCP Rule | TCP      |       5000 | 0.0.0.0/0 | Mainframe node interface |
-| Custom UDP Rule | UDP      |      30399 | 0.0.0.0/0 | swarm UDP                |
+| Type            | Protocol | Port Range | Source    | Description                  |
+| ---             | ---      |        --- | ---       | ---                          |
+| SSH (22)        | TCP      |         22 | 0.0.0.0/0 | SSH                          |
+| Custom TCP Rule | TCP      |      30399 | 0.0.0.0/0 | swarm TCP                    |
+| Custom TCP Rule | TCP      |       5000 | 0.0.0.0/0 | Mailboxing service interface |
+| Custom UDP Rule | UDP      |      30399 | 0.0.0.0/0 | swarm UDP                    |
 
 **Outbound**
 
@@ -139,7 +139,7 @@ You're connected!
 To build local version run `yarn start`. Afterwards you can start the built server
 from `./bin/onyx-server`.
 
-Mainframe node depends on having a local swarm node running. You can start it by running
+A Mainframe node depends on having a local swarm node running. You can start it by running
 the `start_swarm_node.sh` script. This should allow you to run `onyx-server` with
 no special arguments.
 
