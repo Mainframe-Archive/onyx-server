@@ -42,7 +42,16 @@ to conveniently set up an onyx-server on AWS.
 To do it, make sure you have an AWS account and your AWS CLI is configured to 
 use the `eu-west-1` (Ireland) region as default. We're going to assume you have a
 [VPC](https://eu-west-1.console.aws.amazon.com/vpc/home?region=eu-west-1#)
-configured (created and connected to an Internet Gateway) in this region.
+configured in that region.
+
+Aside from a VPC and an Internet Gateway, the 
+[Route Table](https://eu-west-1.console.aws.amazon.com/vpc/home?region=eu-west-1#routetables:)
+has to be configured for this VPC, with routes set like these:
+
+| Destination | Target                      | Status | Propagated |
+| ---         | ----                        | ---    | ---        |
+| 10.0.0.0/16 | local                       | Active | No         |
+| 0.0.0.0/0   | \<INTERNET GATEWAY ID HERE> | Active | No         |
 
 #### 1. Create a security group for your Onyx Server
 
@@ -72,12 +81,13 @@ in the AWS dashboard and create a new subnet in your VPC. Make sure it's within
 the vpc CIDR range. For example if the VPC CIDR is `10.0.0.0/16`, the sg
 IPv4 CIDR block can be `10.0.0.1/24`.
 
-### 3. Create an SSH key
+#### 3. Create an SSH key
 You're going to use it to connect to the Onyx Server EC2 node.
 
 ```bash
 $ mkdir ~/ssh
 $ aws ec2 create-key-pair --key-name my_key --output text --query KeyMaterial > ~/ssh/my_key.pem
+$ chmod 400 ~/ssh/my_key.pem
 ```
 
 #### 4. Launch the Onyx Server
