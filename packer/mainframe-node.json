@@ -1,0 +1,73 @@
+{
+    "variables": {
+        "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+        "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+        "region": "eu-west-1",
+        "datadir": "/home/ubuntu/user_data",
+        "onyx_server_version": "0.4.6"
+    },
+    "builders": [
+        {
+            "access_key": "{{user `aws_access_key`}}",
+            "ami_name": "onyx-server-{{isotime \"2006-01-02_15-04-05\"}}",
+            "instance_type": "m3.medium",
+            "region": "eu-west-1",
+            "secret_key": "{{user `aws_secret_key`}}",
+            "source_ami": "ami-8fd760f6",
+            "ssh_username": "ubuntu",
+            "type": "amazon-ebs",
+            "associate_public_ip_address": true
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir -p {{ user `datadir` }}",
+                "mkdir -p /home/ubuntu/geth_binaries"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash - ",
+                "sudo apt-get install -y nodejs",
+                "node --version",
+                "curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - ",
+                "echo \"deb https://dl.yarnpkg.com/debian/ stable main\" | sudo tee /etc/apt/sources.list.d/yarn.list ",
+                "sudo apt-get update",
+                "sudo apt-get install -y yarn"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "./",
+            "destination": "/home/ubuntu/"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo add-apt-repository -y ppa:longsleep/golang-backports",
+                "sudo apt update",
+                "sudo apt-get install -y golang-go jq tree",
+                "go version"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "# swarm",
+                "./build_swarm_binaries.sh",
+                "rm -rf /home/ubuntu/external_deps/go-ethereum",
+                "# onyx",
+                "sudo sudo npm install --global onyx-server@{{ user `onyx_server_version` }}",
+                "sudo chown -R ubuntu:ubuntu /home/ubuntu/.config",
+                "# services",
+                "sudo cp /home/ubuntu/services/* /etc/systemd/system/",
+                "tree /home/ubuntu",
+                "sudo systemctl enable swarm.service",
+                "sudo systemctl enable onyx.service"
+            ]
+        }
+    ]
+}

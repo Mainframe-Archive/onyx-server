@@ -1,0 +1,10 @@
+[Unit]
+Description=Swarm PSS Service
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/home/ubuntu/run-swarm.sh /home/ubuntu/user_data
+Restart=always
+
+[Install]

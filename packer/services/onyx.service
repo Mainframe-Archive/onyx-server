@@ -1,0 +1,13 @@
+[Unit]
+Description=Onyx Server Service
+After=swarm.service
+Wants=swarm.service
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/home/ubuntu/run-onyx-server.sh
+Restart=always
+
+[Install]
+WantedBy=default.target
