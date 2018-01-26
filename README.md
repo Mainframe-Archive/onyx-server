@@ -157,7 +157,7 @@ no special arguments.
 
 in one shell:
 ```sh
-./start_swarm_node.sh <some_swarm_data_directory_here>
+./scripts/start_swarm_node.sh <some_swarm_data_directory_here>
 ```
 
 in another shell:
