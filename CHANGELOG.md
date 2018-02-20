@@ -1,3 +1,7 @@
+## v0.5.0 (in progress)
+
+Require staking Mainframe tokens to start.
+
 ## v0.4.0 (2017-12-11)
 
 Breaking PSS API changes to hex values.

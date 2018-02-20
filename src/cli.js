@@ -1,5 +1,3 @@
-// @flow
-
 import program from 'commander'
 
 import { default as start } from './index'

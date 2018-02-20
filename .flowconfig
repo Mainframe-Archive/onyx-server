@@ -1,5 +1,6 @@
 [ignore]
 .*/node_modules/graphql/.*
+.*/node_modules/oboe/test/json/incomplete.json
 <PROJECT_ROOT>/lib/.*
 
 [include]

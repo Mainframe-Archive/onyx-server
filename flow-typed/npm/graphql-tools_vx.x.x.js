@@ -1,4 +1,4 @@
-// flow-typed signature: 1c1849c50df0a75330f33161b883c56c
+// flow-typed signature: cfb242b20cc4b246d89f9f595a8feabb
 // flow-typed version: <<STUB>>/graphql-tools_v^2.12.0/flow_v0.61.0
 
 /**
@@ -35,6 +35,10 @@ declare module 'graphql-tools/dist/isEmptyObject' {
 }
 
 declare module 'graphql-tools/dist/Logger' {
+  declare module.exports: any;
+}
+
+declare module 'graphql-tools/dist/mergeDeep' {
   declare module.exports: any;
 }
 
@@ -78,6 +82,10 @@ declare module 'graphql-tools/dist/stitching/mergeSchemas' {
   declare module.exports: any;
 }
 
+declare module 'graphql-tools/dist/stitching/observableToAsyncIterable' {
+  declare module.exports: any;
+}
+
 declare module 'graphql-tools/dist/stitching/resolveFromParentTypename' {
   declare module.exports: any;
 }
@@ -106,6 +114,9 @@ declare module 'graphql-tools/dist/isEmptyObject.js' {
 }
 declare module 'graphql-tools/dist/Logger.js' {
   declare module.exports: $Exports<'graphql-tools/dist/Logger'>;
+}
+declare module 'graphql-tools/dist/mergeDeep.js' {
+  declare module.exports: $Exports<'graphql-tools/dist/mergeDeep'>;
 }
 declare module 'graphql-tools/dist/mock.js' {
   declare module.exports: $Exports<'graphql-tools/dist/mock'>;
@@ -136,6 +147,9 @@ declare module 'graphql-tools/dist/stitching/makeRemoteExecutableSchema.js' {
 }
 declare module 'graphql-tools/dist/stitching/mergeSchemas.js' {
   declare module.exports: $Exports<'graphql-tools/dist/stitching/mergeSchemas'>;
+}
+declare module 'graphql-tools/dist/stitching/observableToAsyncIterable.js' {
+  declare module.exports: $Exports<'graphql-tools/dist/stitching/observableToAsyncIterable'>;
 }
 declare module 'graphql-tools/dist/stitching/resolveFromParentTypename.js' {
   declare module.exports: $Exports<'graphql-tools/dist/stitching/resolveFromParentTypename'>;

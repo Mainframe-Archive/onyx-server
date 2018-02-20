@@ -8,9 +8,10 @@ import {
   setupContactTopic,
   subscribeToStoredConvos,
 } from './pss/client'
+import createContract from './contract'
 import createServer from './server'
 
-const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL } = process.env
+const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL, WEB3_URL } = process.env
 
 type Options = {
   wsUrl?: string,
@@ -19,12 +20,17 @@ type Options = {
   port?: number,
   unsecure?: boolean,
   certsDir?: string,
+  web3url?: string,
 }
 
 const start = async (opts: Options) => {
-  const httpUrl = opts.httpUrl || SWARM_HTTP_URL || 'https://onyx-storage.mainframe.com'
+  const httpUrl =
+    opts.httpUrl || SWARM_HTTP_URL || 'https://onyx-storage.mainframe.com'
   const wsUrl = opts.wsUrl || SWARM_WS_URL || 'ws://localhost:8546'
   const certsDir = opts.certsDir || 'certs'
+  const web3Url =
+    opts.web3url || WEB3_URL || 'https://rinkeby.infura.io/36QrH5cKkbHihEoWH4zS'
+  const contract = createContract(web3Url)
 
   let port = opts.port
   if (port == null) {
@@ -36,12 +42,36 @@ const start = async (opts: Options) => {
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
+  // Check if address has stake, throw otherwise
+  const addr = db.getAddress()
+  const missingStake = () => {
+    const err: Object = new Error(`Missing stake for address ${addr}`)
+    err.address = addr
+    throw err
+  }
+  let addrHasStake = false
+  try {
+    addrHasStake = await contract.hasStake(addr)
+  } catch (err) {
+    throw missingStake()
+  }
+  if (!addrHasStake) {
+    throw missingStake()
+  }
+
   // Start listening to the "contact request" topic and handle these requests
   await setupContactTopic(pss, db)
   // Set subscriptions for stored convos
   await subscribeToStoredConvos(pss, db)
   // Start the BZZ and GraphQL server
-  const server = await createServer(pss, db, httpUrl, port, !opts.unsecure, certsDir)
+  const server = await createServer(
+    pss,
+    db,
+    httpUrl,
+    port,
+    !opts.unsecure,
+    certsDir,
+  )
   return server
 }
 
