@@ -1,5 +1,6 @@
 // @flow
 
+import CryptoJS from 'crypto-js'
 import type Conf from 'conf'
 
 import DB from './db'
@@ -42,8 +43,12 @@ const start = async (opts: Options) => {
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
+  // Derive wallet address from public key (stored as profile ID during setup)
+  const pubKey = CryptoJS.enc.Hex.parse(db.getProfile().id)
+  const hash = CryptoJS.SHA3(pubKey, { outputLength: 256 })
+  const addr = '0x' + hash.toString(CryptoJS.enc.Hex).slice(24)
+
   // Check if address has stake, throw otherwise
-  const addr = db.getAddress()
   const missingStake = () => {
     const err: Object = new Error(`Missing stake for address ${addr}`)
     err.address = addr
