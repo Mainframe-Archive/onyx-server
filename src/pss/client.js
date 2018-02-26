@@ -5,6 +5,7 @@ import { createPSSWebSocket, encodeHex, type hex, type PSS } from 'erebos'
 import { Subscriber } from 'rxjs/Subscriber'
 import type { Subscription } from 'rxjs/Subscription'
 
+import { pubKeyToAddress } from '../crypto'
 import type DB, {
   Contact,
   ContactRequest,
@@ -474,6 +475,12 @@ export const requestContact = async (pss: PSS, db: DB, id: hex) => {
   const profile = db.getProfile()
   if (profile == null) {
     throw new Error('Cannot call requestContact() before profile is setup')
+  }
+
+  // Prevent from adding peer without stake
+  const addrHasStake = await db.contracts.hasStake(pubKeyToAddress(id))
+  if (!addrHasStake) {
+    throw new Error('Contact does not have stake')
   }
 
   // Get topic for contact + create random new p2p topic

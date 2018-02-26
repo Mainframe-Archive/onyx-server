@@ -63,7 +63,7 @@ const PUBLIC_RESOLVER_ADDRESSES = {
   MAINNET: '0x1da022710df5002339274aadee8d58218e9d6ab5',
 }
 
-const namehash = (name) => {
+const namehash = (name: string) => {
   var node = '0x0000000000000000000000000000000000000000000000000000000000000000'
   if (name !== '') {
     var labels = name.split('.')
@@ -89,7 +89,7 @@ export default (ethNetwork: string) => {
         else {
           const stakeContract = new Web3Contract(STAKE_ABI, stakeAddress)
           stakeContract.methods.hasStake(address).call((err, res) => {
-            if (err) reject(err)
+            if (err) resolve(false)
             else resolve(res)
           })
         }
