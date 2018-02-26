@@ -13,6 +13,21 @@ import createServer from './server'
 
 const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL, WEB3_URL } = process.env
 
+const ENS_STAKE_NAME = {
+  TESTNET: 'stake.mainframe.test', // ROPSTEN
+  MAINNET: 'stake.mainframehq.eth',
+}
+
+const PUBLIC_RESOLVER_ADDRESSES = {
+  TESTNET: '0x4c641fb9bad9b60ef180c31f56051ce826d21a9a', // ROPSTEN
+  MAINNET: '0x1da022710df5002339274aadee8d58218e9d6ab5',
+}
+
+const WEB3_URLS = {
+  TESTNET: 'https://ropsten.infura.io/KWLG1YOMaYgl4wiFlcJv',
+  MAINNET: 'https://mainnet.infura.io/KWLG1YOMaYgl4wiFlcJv',
+}
+
 type Options = {
   wsUrl?: string,
   httpUrl?: string,
@@ -20,6 +35,7 @@ type Options = {
   port?: number,
   unsecure?: boolean,
   certsDir?: string,
+  testNet?: boolean,
   web3Url?: string,
   stakeEnsAddress?: string,
   ensResolverAddress?: string,
@@ -30,11 +46,12 @@ const start = async (opts: Options) => {
     opts.httpUrl || SWARM_HTTP_URL || 'https://onyx-storage.mainframe.com'
   const wsUrl = opts.wsUrl || SWARM_WS_URL || 'ws://localhost:8546'
   const certsDir = opts.certsDir || 'certs'
+  const ethNetwork = opts.testNet ? 'TESTNET' : 'MAINNET'
 
   // Defaults to Mainnet
-  const web3Url = opts.web3Url || 'https://mainnet.infura.io/36QrH5cKkbHihEoWH4zS'
-  const stakeEns = opts.stakeEnsAddress || 'stake.mainframe.eth'
-  const resolverAddress = opts.ensResolverAddress || '0x1da022710df5002339274aadee8d58218e9d6ab5'
+  const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
+  const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
+  const resolverAddress = opts.ensResolverAddress || PUBLIC_RESOLVER_ADDRESSES[ethNetwork]
 
   let port = opts.port
   if (port == null) {
