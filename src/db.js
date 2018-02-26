@@ -126,8 +126,14 @@ export default class DB {
   _store: Conf
   _typings: Map<hex, ConvoTypings> = new Map()
 
-  constructor(ethNetwork: string, store: ?Conf, name?: string) {
-    this.contracts = createContracts(ethNetwork)
+  constructor(
+    web3Url: string,
+    ensName: string,
+    resolverAddress: string,
+    store: ?Conf,
+    name?: string,
+  ){
+    this.contracts = createContracts(web3Url, ensName, resolverAddress)
 
     this._store = store || new Conf({ configName: name || 'onyx-server' })
     if (!this._store.has('state')) {

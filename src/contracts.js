@@ -46,23 +46,6 @@ const RESOLVER_ABI = [
   },
 ]
 
-const INFURA_URLS = {
-  ROPSTEN: 'https://ropsten.infura.io/KWLG1YOMaYgl4wiFlcJv',
-  RINKEBY: 'https://rinkeby.infura.io/KWLG1YOMaYgl4wiFlcJv',
-  MAINNET: 'https://mainnet.infura.io/KWLG1YOMaYgl4wiFlcJv',
-}
-const ENS_STAKE_NAMES = {
-  ROPSTEN: 'stake.mainframe.test',
-  RINKEBY: 'stake.mainframe.test',
-  MAINNET: 'stake.mainframe.eth',
-}
-
-const PUBLIC_RESOLVER_ADDRESSES = {
-  ROPSTEN: '0x4c641fb9bad9b60ef180c31f56051ce826d21a9a',
-  RINKEBY: '0xb14fdee4391732ea9d2267054ead2084684c0ad8',
-  MAINNET: '0x1da022710df5002339274aadee8d58218e9d6ab5',
-}
-
 const namehash = (name: string) => {
   var node = '0x0000000000000000000000000000000000000000000000000000000000000000'
   if (name !== '') {
@@ -74,18 +57,16 @@ const namehash = (name: string) => {
   return node.toString()
 }
 
-export default (ethNetwork: string) => {
-  const WEB3_URL = INFURA_URLS[ethNetwork]
-  const ENS_STAKE = ENS_STAKE_NAMES[ethNetwork]
-  Web3Contract.setProvider(WEB3_URL)
+export default (web3Url: string, stakeEnsName: string, resolverAddress: string) => {
+  Web3Contract.setProvider(web3Url)
 
-  const ensHash = namehash(ENS_STAKE)
-  const resolverContract = new Web3Contract(RESOLVER_ABI, PUBLIC_RESOLVER_ADDRESSES[ethNetwork])
+  const ensHash = namehash(stakeEnsName)
+  const resolverContract = new Web3Contract(RESOLVER_ABI, resolverAddress)
 
   const hasStake = (address: string): Promise<boolean> =>
     new Promise((resolve, reject) => {
       resolverContract.methods.addr(ensHash).call((err, stakeAddress) => {
-        if (err) reject(err)
+        if (err) resolve(false)
         else {
           const stakeContract = new Web3Contract(STAKE_ABI, stakeAddress)
           stakeContract.methods.hasStake(address).call((err, res) => {

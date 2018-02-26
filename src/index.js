@@ -20,7 +20,9 @@ type Options = {
   port?: number,
   unsecure?: boolean,
   certsDir?: string,
-  ethNetwork?: string,
+  web3Url?: string,
+  stakeEnsAddress?: string,
+  ensResolverAddress?: string,
 }
 
 const start = async (opts: Options) => {
@@ -29,13 +31,23 @@ const start = async (opts: Options) => {
   const wsUrl = opts.wsUrl || SWARM_WS_URL || 'ws://localhost:8546'
   const certsDir = opts.certsDir || 'certs'
 
+  // Defaults to Mainnet
+  const web3Url = opts.web3Url || 'https://mainnet.infura.io/36QrH5cKkbHihEoWH4zS'
+  const stakeEns = opts.stakeEnsAddress || 'stake.mainframe.eth'
+  const resolverAddress = opts.ensResolverAddress || '0x1da022710df5002339274aadee8d58218e9d6ab5'
+
   let port = opts.port
   if (port == null) {
     port = ONYX_PORT == null ? 5000 : parseInt(ONYX_PORT, 10)
   }
-  const ethNetwork = opts.ethNetwork || 'ROPSTEN'
   // Setup DB using provided store (optional)
-  const db = new DB(ethNetwork, opts.store, `onyx-server-${port}`)
+  const db = new DB(
+    web3Url,
+    stakeEns,
+    resolverAddress,
+    opts.store,
+    `onyx-server-${port}`
+  )
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
