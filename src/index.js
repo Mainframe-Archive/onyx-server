@@ -21,7 +21,7 @@ type Options = {
   port?: number,
   unsecure?: boolean,
   certsDir?: string,
-  web3url?: string,
+  ethNetwork?: string,
 }
 
 const start = async (opts: Options) => {
@@ -31,7 +31,7 @@ const start = async (opts: Options) => {
   const certsDir = opts.certsDir || 'certs'
   const web3Url =
     opts.web3url || WEB3_URL || 'https://rinkeby.infura.io/36QrH5cKkbHihEoWH4zS'
-  const contract = createContract(web3Url)
+  const contract = createContract(opts.ethNetwork)
 
   let port = opts.port
   if (port == null) {
@@ -47,7 +47,6 @@ const start = async (opts: Options) => {
   const pubKey = CryptoJS.enc.Hex.parse(db.getProfile().id)
   const hash = CryptoJS.SHA3(pubKey, { outputLength: 256 })
   const addr = '0x' + hash.toString(CryptoJS.enc.Hex).slice(24)
-
   // Check if address has stake, throw otherwise
   const missingStake = () => {
     const err: Object = new Error(`Missing stake for address ${addr}`)
