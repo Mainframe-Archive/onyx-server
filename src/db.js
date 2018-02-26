@@ -6,8 +6,6 @@ import type { hex } from 'erebos'
 import { PubSub } from 'graphql-subscriptions'
 import { merge } from 'lodash'
 
-import createContracts from './contracts'
-
 const TYPING_TIMEOUT = 10000 // 10 secs in ms
 
 const log = debug('onyx:db')
@@ -127,14 +125,11 @@ export default class DB {
   _typings: Map<hex, ConvoTypings> = new Map()
 
   constructor(
-    web3Url: string,
-    ensName: string,
-    resolverAddress: string,
+    contracts: Object,
     store: ?Conf,
     name?: string,
   ){
-    this.contracts = createContracts(web3Url, ensName, resolverAddress)
-
+    this.contracts = contracts
     this._store = store || new Conf({ configName: name || 'onyx-server' })
     if (!this._store.has('state')) {
       this.resetState()

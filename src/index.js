@@ -10,6 +10,7 @@ import {
   subscribeToStoredConvos,
 } from './pss/client'
 import createServer from './server'
+import createContracts from './contracts'
 
 const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL, WEB3_URL } = process.env
 
@@ -58,10 +59,15 @@ const start = async (opts: Options) => {
     port = ONYX_PORT == null ? 5000 : parseInt(ONYX_PORT, 10)
   }
   // Setup DB using provided store (optional)
-  const db = new DB(
+
+  const contracts = createContracts(
     web3Url,
     stakeEns,
     resolverAddress,
+  )
+
+  const db = new DB(
+    contracts,
     opts.store,
     `onyx-server-${port}`
   )
