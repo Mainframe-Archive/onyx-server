@@ -24,16 +24,16 @@ const STAKE_ABI = [
   },
 ]
 
-const STAKE_ADDR = '0xcca509c2bf487221cc297c7c1b663afc5c113842'
+const STAKE_ADDR = '0x7e16016df8c3d0a944cf568309b4214ab9856bee'
 
 export default (web3url: string) => {
   Web3Contract.setProvider(web3url)
   const stakeContract = new Web3Contract(STAKE_ABI, STAKE_ADDR)
 
   const hasStake = (address: string): Promise<boolean> =>
-    new Promise((resolve, reject) => {
+    new Promise(resolve => {
       stakeContract.methods.hasStake(address).call((err, res) => {
-        if (err) reject(err)
+        if (err) resolve(false)
         else resolve(res)
       })
     })

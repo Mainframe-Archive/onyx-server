@@ -1,15 +1,14 @@
 // @flow
 
-import CryptoJS from 'crypto-js'
 import type Conf from 'conf'
 
+import { pubKeyToAddress } from './crypto'
 import DB from './db'
 import {
   setupPss,
   setupContactTopic,
   subscribeToStoredConvos,
 } from './pss/client'
-import createContract from './contract'
 import createServer from './server'
 
 const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL, WEB3_URL } = process.env
@@ -31,7 +30,6 @@ const start = async (opts: Options) => {
   const certsDir = opts.certsDir || 'certs'
   const web3Url =
     opts.web3url || WEB3_URL || 'https://rinkeby.infura.io/36QrH5cKkbHihEoWH4zS'
-  const contract = createContract(web3Url)
 
   let port = opts.port
   if (port == null) {
@@ -39,29 +37,23 @@ const start = async (opts: Options) => {
   }
 
   // Setup DB using provided store (optional)
-  const db = new DB(opts.store, `onyx-server-${port}`)
+  const db = new DB(web3Url, opts.store, `onyx-server-${port}`)
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
   // Derive wallet address from public key (stored as profile ID during setup)
-  const pubKey = CryptoJS.enc.Hex.parse(db.getProfile().id)
-  const hash = CryptoJS.SHA3(pubKey, { outputLength: 256 })
-  const addr = '0x' + hash.toString(CryptoJS.enc.Hex).slice(24)
+  const profile = db.getProfile()
+  if (profile == null) {
+    throw new Error('Invalid setup')
+  }
+  const addr = pubKeyToAddress(profile.id)
 
   // Check if address has stake, throw otherwise
-  const missingStake = () => {
+  const addrHasStake = await db.contracts.hasStake(addr)
+  if (!addrHasStake) {
     const err: Object = new Error(`Missing stake for address ${addr}`)
     err.address = addr
     throw err
-  }
-  let addrHasStake = false
-  try {
-    addrHasStake = await contract.hasStake(addr)
-  } catch (err) {
-    throw missingStake()
-  }
-  if (!addrHasStake) {
-    throw missingStake()
   }
 
   // Start listening to the "contact request" topic and handle these requests
