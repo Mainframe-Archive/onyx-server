@@ -40,6 +40,7 @@ export class TopicSubject extends AnonymousSubject<Object> {
       })
       .filter(Boolean)
 
+    // $FlowFixMe: Subscriber type
     super(observer, observable)
     this.id = topic
     this._log = log

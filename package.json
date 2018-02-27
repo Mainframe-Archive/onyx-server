@@ -1,6 +1,6 @@
 {
   "name": "onyx-server",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "PSS mailboxing service",
   "repository": "git@github.com:MainframeHQ/onyx-server.git",
   "author": "Mainframe",
@@ -57,10 +57,5 @@
     "flow-copy-source": "^1.2.1",
     "prettier": "^1.9.1"
   },
-  "files": [
-    "bin/*",
-    "lib/*",
-    "scripts/*",
-    "cert-configs/*"
-  ]
+  "files": ["bin/*", "lib/*", "scripts/*", "cert-configs/*"]
 }
