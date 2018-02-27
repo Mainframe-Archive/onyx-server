@@ -108,7 +108,7 @@ export default (web3Url: string, stakeEnsName: string, ensAddress: string) => {
     })
   }
 
-  const stakeCheck = async (
+  const stakeCheck = (
     stakeAddress: string,
     walletAddress: string,
   ): Promise<boolean> => {

@@ -53,7 +53,7 @@ const start = async (opts: Options) => {
   }
 
   // Setup smart contracts (defaults to Mainnet)
-  const ethNetwork = 'TESTNET' //opts.testNet ? 'TESTNET' : 'MAINNET'
+  const ethNetwork = opts.testNet ? 'TESTNET' : 'MAINNET'
   const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
   const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
   const ensAddress = opts.ensAddress || ENS_ADDRESSES[ethNetwork]
