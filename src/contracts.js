@@ -4,23 +4,23 @@ import Web3Contract from 'web3-eth-contract'
 import Web3Utils from 'web3-utils'
 
 const ENS_ABI = [
-	{
+  {
     constant: true,
     inputs: [
       {
         name: 'node',
-        type: 'bytes32'
-      }
+        type: 'bytes32',
+      },
     ],
     name: 'resolver',
     outputs: [
       {
         name: '',
-        type: 'address'
-      }
+        type: 'address',
+      },
     ],
     payable: false,
-    type: 'function'
+    type: 'function',
   },
 ]
 
@@ -52,27 +52,32 @@ const RESOLVER_ABI = [
     inputs: [
       {
         name: 'node',
-        type: 'bytes32'
-      }
+        type: 'bytes32',
+      },
     ],
     name: 'addr',
     outputs: [
       {
         name: 'ret',
-        type: 'address'
-      }
+        type: 'address',
+      },
     ],
     payable: false,
-    type: 'function'
+    type: 'function',
   },
 ]
 
+const NO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 const namehash = (name: string) => {
-  var node = '0x0000000000000000000000000000000000000000000000000000000000000000'
+  let node =
+    '0x0000000000000000000000000000000000000000000000000000000000000000'
   if (name !== '') {
-    var labels = name.split('.')
-    for(var i = labels.length - 1; i >= 0; i--) {
-      node = Web3Utils.sha3(node + Web3Utils.sha3(labels[i]).slice(2), {encoding: 'hex'})
+    const labels = name.split('.')
+    for (let i = labels.length - 1; i >= 0; i--) {
+      node = Web3Utils.sha3(node + Web3Utils.sha3(labels[i]).slice(2), {
+        encoding: 'hex',
+      })
     }
   }
   return node.toString()
@@ -82,27 +87,50 @@ export default (web3Url: string, stakeEnsName: string, ensAddress: string) => {
   Web3Contract.setProvider(web3Url)
 
   const ensHash = namehash(stakeEnsName)
+  const ensContract = new Web3Contract(ENS_ABI, ensAddress)
 
-  const hasStake = (address: string): Promise<boolean> =>
+  const getResolverAddress = (): Promise<string> =>
     new Promise((resolve, reject) => {
-      const ensContract = new Web3Contract(ENS_ABI, ensAddress)
-      ensContract.methods.resolver(ensHash).call((err, resolverAddress) => {
-        const noAddress = '0x0000000000000000000000000000000000000000'
-        if (err || resolverAddress === noAddress) resolve(false)
-        else {
-          const resolverContract = new Web3Contract(RESOLVER_ABI, resolverAddress)
-          resolverContract.methods.addr(ensHash).call((err, stakeAddress) => {
-            if (err) resolve(false)
-            else {
-              const stakeContract = new Web3Contract(STAKE_ABI, stakeAddress)
-              stakeContract.methods.hasStake(address).call((err, res) => {
-                if (err) resolve(false)
-                else resolve(res)
-              })
-            }
-          })
-        }
+      ensContract.methods.resolver(ensHash).call((err, address) => {
+        if (err) reject(err)
+        else if (address === NO_ADDRESS) reject(new Error('No address'))
+        else resolve(address)
       })
     })
+
+  const resolveStakeAddress = (resolverAddress: string): Promise<string> => {
+    const resolverContract = new Web3Contract(RESOLVER_ABI, resolverAddress)
+    return new Promise((resolve, reject) => {
+      resolverContract.methods.addr(ensHash).call((err, stakeAddress) => {
+        if (err) reject(err)
+        else resolve(stakeAddress)
+      })
+    })
+  }
+
+  const stakeCheck = async (
+    stakeAddress: string,
+    walletAddress: string,
+  ): Promise<boolean> => {
+    const stakeContract = new Web3Contract(STAKE_ABI, stakeAddress)
+    return new Promise((resolve, reject) => {
+      stakeContract.methods.hasStake(walletAddress).call((err, res) => {
+        if (err) reject(err)
+        else resolve(res)
+      })
+    })
+  }
+
+  const hasStake = async (walletAddress: string): Promise<boolean> => {
+    try {
+      const resolverAddress = await getResolverAddress()
+      const stakeAddress = await resolveStakeAddress(resolverAddress)
+      return stakeCheck(stakeAddress, walletAddress)
+    } catch (err) {
+      console.warn(`Error trying to check stake for ${walletAddress}`, err)
+      return false
+    }
+  }
+
   return { hasStake }
 }

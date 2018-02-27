@@ -47,26 +47,19 @@ const start = async (opts: Options) => {
     opts.httpUrl || SWARM_HTTP_URL || 'https://onyx-storage.mainframe.com'
   const wsUrl = opts.wsUrl || SWARM_WS_URL || 'ws://localhost:8546'
   const certsDir = opts.certsDir || 'certs'
-  const ethNetwork = opts.testNet ? 'TESTNET' : 'MAINNET'
-
-  // Defaults to Mainnet
-  const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
-  const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
-  const ensAddress = opts.ensAddress || ENS_ADDRESSES[ethNetwork]
-
   let port = opts.port
   if (port == null) {
     port = ONYX_PORT == null ? 5000 : parseInt(ONYX_PORT, 10)
   }
-  // Setup DB using provided store (optional)
 
+  // Setup smart contracts (defaults to Mainnet)
+  const ethNetwork = 'TESTNET' //opts.testNet ? 'TESTNET' : 'MAINNET'
+  const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
+  const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
+  const ensAddress = opts.ensAddress || ENS_ADDRESSES[ethNetwork]
   const contracts = createContracts(web3Url, stakeEns, ensAddress)
-
-  const db = new DB(
-    contracts,
-    opts.store,
-    `onyx-server-${port}`
-  )
+  // Setup DB using provided store (optional)
+  const db = new DB(contracts, opts.store, `onyx-server-${port}`)
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
