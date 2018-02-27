@@ -19,9 +19,9 @@ const ENS_STAKE_NAME = {
   MAINNET: 'stake.mainframehq.eth',
 }
 
-const PUBLIC_RESOLVER_ADDRESSES = {
-  TESTNET: '0x4c641fb9bad9b60ef180c31f56051ce826d21a9a', // ROPSTEN
-  MAINNET: '0x1da022710df5002339274aadee8d58218e9d6ab5',
+const ENS_ADDRESSES = {
+  TESTNET: '0x112234455c3a32fd11230c42e7bccd4a84e02010', // ROPSTEN
+  MAINNET: '0x314159265dD8dbb310642f98f50C066173C1259b',
 }
 
 const WEB3_URLS = {
@@ -39,7 +39,7 @@ type Options = {
   testNet?: boolean,
   web3Url?: string,
   stakeEnsAddress?: string,
-  ensResolverAddress?: string,
+  ensAddress?: string,
 }
 
 const start = async (opts: Options) => {
@@ -47,30 +47,19 @@ const start = async (opts: Options) => {
     opts.httpUrl || SWARM_HTTP_URL || 'https://onyx-storage.mainframe.com'
   const wsUrl = opts.wsUrl || SWARM_WS_URL || 'ws://localhost:8546'
   const certsDir = opts.certsDir || 'certs'
-  const ethNetwork = opts.testNet ? 'TESTNET' : 'MAINNET'
-
-  // Defaults to Mainnet
-  const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
-  const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
-  const resolverAddress = opts.ensResolverAddress || PUBLIC_RESOLVER_ADDRESSES[ethNetwork]
-
   let port = opts.port
   if (port == null) {
     port = ONYX_PORT == null ? 5000 : parseInt(ONYX_PORT, 10)
   }
+
+  // Setup smart contracts (defaults to Mainnet)
+  const ethNetwork = opts.testNet ? 'TESTNET' : 'MAINNET'
+  const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
+  const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
+  const ensAddress = opts.ensAddress || ENS_ADDRESSES[ethNetwork]
+  const contracts = createContracts(web3Url, stakeEns, ensAddress)
   // Setup DB using provided store (optional)
-
-  const contracts = createContracts(
-    web3Url,
-    stakeEns,
-    resolverAddress,
-  )
-
-  const db = new DB(
-    contracts,
-    opts.store,
-    `onyx-server-${port}`
-  )
+  const db = new DB(contracts, opts.store, `onyx-server-${port}`)
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
