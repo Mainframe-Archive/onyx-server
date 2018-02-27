@@ -19,9 +19,9 @@ const ENS_STAKE_NAME = {
   MAINNET: 'stake.mainframehq.eth',
 }
 
-const PUBLIC_RESOLVER_ADDRESSES = {
-  TESTNET: '0x4c641fb9bad9b60ef180c31f56051ce826d21a9a', // ROPSTEN
-  MAINNET: '0x1da022710df5002339274aadee8d58218e9d6ab5',
+const ENS_ADDRESSES = {
+  TESTNET: '0x112234455c3a32fd11230c42e7bccd4a84e02010', // ROPSTEN
+  MAINNET: '0x314159265dD8dbb310642f98f50C066173C1259b',
 }
 
 const WEB3_URLS = {
@@ -39,7 +39,7 @@ type Options = {
   testNet?: boolean,
   web3Url?: string,
   stakeEnsAddress?: string,
-  ensResolverAddress?: string,
+  ensAddress?: string,
 }
 
 const start = async (opts: Options) => {
@@ -52,7 +52,7 @@ const start = async (opts: Options) => {
   // Defaults to Mainnet
   const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
   const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
-  const resolverAddress = opts.ensResolverAddress || PUBLIC_RESOLVER_ADDRESSES[ethNetwork]
+  const ensAddress = opts.ensAddress || ENS_ADDRESSES[ethNetwork]
 
   let port = opts.port
   if (port == null) {
@@ -60,11 +60,7 @@ const start = async (opts: Options) => {
   }
   // Setup DB using provided store (optional)
 
-  const contracts = createContracts(
-    web3Url,
-    stakeEns,
-    resolverAddress,
-  )
+  const contracts = createContracts(web3Url, stakeEns, ensAddress)
 
   const db = new DB(
     contracts,
