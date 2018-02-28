@@ -1,6 +1,7 @@
 // @flow
 
 import type Conf from 'conf'
+import createContracts from 'onyx-contracts'
 
 import { pubKeyToAddress } from './crypto'
 import DB from './db'
@@ -10,24 +11,8 @@ import {
   subscribeToStoredConvos,
 } from './pss/client'
 import createServer from './server'
-import createContracts from './contracts'
 
 const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL, WEB3_URL } = process.env
-
-const ENS_STAKE_NAME = {
-  TESTNET: 'stake.mainframe.test', // ROPSTEN
-  MAINNET: 'stake.mainframehq.eth',
-}
-
-const ENS_ADDRESSES = {
-  TESTNET: '0x112234455c3a32fd11230c42e7bccd4a84e02010', // ROPSTEN
-  MAINNET: '0x314159265dD8dbb310642f98f50C066173C1259b',
-}
-
-const WEB3_URLS = {
-  TESTNET: 'https://ropsten.infura.io/KWLG1YOMaYgl4wiFlcJv',
-  MAINNET: 'https://mainnet.infura.io/KWLG1YOMaYgl4wiFlcJv',
-}
 
 type Options = {
   wsUrl?: string,
@@ -53,11 +38,7 @@ const start = async (opts: Options) => {
   }
 
   // Setup smart contracts (defaults to Mainnet)
-  const ethNetwork = opts.testNet ? 'TESTNET' : 'MAINNET'
-  const web3Url = opts.web3Url || WEB3_URLS[ethNetwork]
-  const stakeEns = opts.stakeEnsAddress || ENS_STAKE_NAME[ethNetwork]
-  const ensAddress = opts.ensAddress || ENS_ADDRESSES[ethNetwork]
-  const contracts = createContracts(web3Url, stakeEns, ensAddress)
+  const contracts = createContracts(opts.testNet ? 'TESTNET' : 'MAINNET')
   // Setup DB using provided store (optional)
   const db = new DB(contracts, opts.store, `onyx-server-${port}`)
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
@@ -71,7 +52,13 @@ const start = async (opts: Options) => {
   const addr = pubKeyToAddress(profile.id)
 
   // Check if address has stake, throw otherwise
-  const addrHasStake = await db.contracts.hasStake(addr)
+  let addrHasStake
+  try {
+    addrHasStake = await db.contracts.walletHasStake(addr)
+  } catch (err) {
+    console.warn(`Could not check stake for address ${addr}`, err)
+    addrHasStake = false
+  }
   if (!addrHasStake) {
     const err: Object = new Error(`Missing stake for address ${addr}`)
     err.address = addr

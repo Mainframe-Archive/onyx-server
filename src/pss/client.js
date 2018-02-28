@@ -478,7 +478,7 @@ export const requestContact = async (pss: PSS, db: DB, id: hex) => {
   }
 
   // Prevent from adding peer without stake
-  const addrHasStake = await db.contracts.hasStake(pubKeyToAddress(id))
+  const addrHasStake = await db.contracts.walletHasStake(pubKeyToAddress(id))
   if (!addrHasStake) {
     throw new Error('Contact does not have stake')
   }

@@ -36,12 +36,11 @@
     "ip": "^1.1.5",
     "lodash": "^4.17.4",
     "node-fetch": "^1.7.3",
+    "onyx-contracts": "^0.1.0",
     "raw-body": "^2.3.2",
     "rxjs": "^5.5.5",
     "subscriptions-transport-ws": "^0.9.4",
-    "uuid": "^3.1.0",
-    "web3-eth-contract": "^1.0.0-beta.30",
-    "web3-utils": "^1.0.0-beta.30"
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -57,5 +56,10 @@
     "flow-copy-source": "^1.2.1",
     "prettier": "^1.9.1"
   },
-  "files": ["bin/*", "lib/*", "scripts/*", "cert-configs/*"]
+  "files": [
+    "bin/*",
+    "lib/*",
+    "scripts/*",
+    "cert-configs/*"
+  ]
 }
