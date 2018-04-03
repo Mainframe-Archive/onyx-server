@@ -28,6 +28,7 @@ type Profile {
   avatar: String
   name: String
   bio: String
+  hasStake: Boolean
 }
 
 type Contact {
@@ -81,6 +82,7 @@ input ProfileInput {
   avatar: String
   name: String
   bio: String
+  hasStake: Boolean
 }
 
 input ChannelInput {

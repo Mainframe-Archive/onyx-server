@@ -15,6 +15,7 @@ export type Profile = {
   avatar?: ?string, // Swarm hash
   name?: ?string,
   bio?: ?string,
+  hasStake?: boolean,
 }
 
 export type FileData = {
@@ -311,6 +312,12 @@ export default class DB {
   upsertContact(contact: Contact) {
     const existing = this.getContact(contact.profile.id)
     this.setContact(existing ? merge({}, existing, contact) : contact)
+  }
+
+  setContactStake(id: string, hasStake: boolean) {
+    const contact = this.getContact(id)
+    contact.profile.hasStake = hasStake
+    this.setContact(contact)
   }
 
   addMessage(
