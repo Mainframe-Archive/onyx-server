@@ -144,12 +144,23 @@ export const joinChannelTopic = async (
       if (contact == null) {
         db.setContact({
           address: p.address || '0x',
-          profile: { id: p.pubKey },
+          profile: { id: p.pubKey, hasStake: true },
         })
       }
-      await pss.setPeerPublicKey(p.pubKey, channel.topic, p.address)
-      logClient('add peer', channel.topic, p.pubKey)
-      topic.addPeer(p.pubKey)
+      try {
+        await pss.setPeerPublicKey(p.pubKey, channel.topic, p.address)
+        logClient('add peer', channel.topic, p.pubKey)
+        topic.addPeer(p.pubKey)
+        if (!contact.profile.hasStake) {
+          db.setContactStake(p.pubKey, true)
+        }
+      } catch (err) {
+        if (err.message.includes('No stake found')) {
+          db.setContactStake(p.pubKey, false)
+        } else {
+          throw err
+        }
+      }
       return p.pubKey
     }),
   )
@@ -165,13 +176,25 @@ export const joinDirectTopic = async (
   id: hex,
   peer: PeerInfo,
 ): Promise<TopicSubject> => {
-  const [topic] = await Promise.all([
-    createTopicSubject(pss, id),
-    pss.setPeerPublicKey(peer.pubKey, id, peer.address),
-  ])
-  topic.addPeer(peer.pubKey)
-  addTopic(db, topic, 'DIRECT', [peer.pubKey])
-  return topic
+  const contact = db.getContact(peer.pubKey)
+  try {
+    const [topic] = await Promise.all([
+      createTopicSubject(pss, id),
+      pss.setPeerPublicKey(peer.pubKey, id, peer.address),
+    ])
+    topic.addPeer(peer.pubKey)
+    addTopic(db, topic, 'DIRECT', [peer.pubKey])
+    return topic
+    if (contact && !contact.profile.hasStake) {
+      // If able to join stake state must have changed
+      db.setContactStake(contact.profile.id, true)
+    }
+  } catch (err) {
+    if (err.message.includes('No stake found') && contact) {
+      db.setContactStake(contact.profile.id, false)
+    }
+    throw err
+  }
 }
 
 export const sendMessage = (
@@ -461,8 +484,12 @@ export const addContactRequest = async (
   db: DB,
   payload: ContactRequestPayload,
 ) => {
+  const addrHasStake = await db.contracts.walletHasStake(pubKeyToAddress(payload.profile.id))
   const contact = {
-    profile: payload.profile,
+    profile: {
+      ...payload.profile,
+      hasStake: addrHasStake,
+    },
     state: 'RECEIVED',
   }
   db.setContactRequest(contact, {
@@ -476,12 +503,6 @@ export const requestContact = async (pss: PssAPI, db: DB, id: hex) => {
   const profile = db.getProfile()
   if (profile == null) {
     throw new Error('Cannot call requestContact() before profile is setup')
-  }
-
-  // Prevent from adding peer without stake
-  const addrHasStake = await db.contracts.walletHasStake(pubKeyToAddress(id))
-  if (!addrHasStake) {
-    throw new Error('Contact does not have stake')
   }
 
   // Get topic for contact + create random new p2p topic
@@ -502,7 +523,7 @@ export const requestContact = async (pss: PssAPI, db: DB, id: hex) => {
   const existing = db.getContact(id)
   const contact = {
     convoID: topic.id,
-    profile: existing ? existing.profile : { id },
+    profile: existing ? existing.profile : { id, hasStake: true },
     state: 'SENT',
   }
   db.setContact(contact)
