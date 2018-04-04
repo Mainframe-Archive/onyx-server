@@ -200,6 +200,7 @@ export default class DB {
   }
 
   setProfile(profile: Profile) {
+    profile.hasStake = true
     this._store.set('state.profile', profile)
   }
 

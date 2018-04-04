@@ -82,7 +82,6 @@ input ProfileInput {
   avatar: String
   name: String
   bio: String
-  hasStake: Boolean
 }
 
 input ChannelInput {

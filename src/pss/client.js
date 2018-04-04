@@ -160,6 +160,8 @@ export const joinChannelTopic = async (
       } catch (err) {
         if (err.message.includes('No stake found')) {
           db.setContactStake(p.pubKey, false)
+        } else {
+          throw err
         }
       }
       return p.pubKey
@@ -481,10 +483,11 @@ export const addContactRequest = async (
   db: DB,
   payload: ContactRequestPayload,
 ) => {
+  const addrHasStake = await db.contracts.walletHasStake(pubKeyToAddress(payload.profile.id))
   const contact = {
     profile: {
       ...payload.profile,
-      hasStake: true,
+      hasStake: addrHasStake,
     },
     state: 'RECEIVED',
   }
