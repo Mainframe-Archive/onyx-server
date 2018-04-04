@@ -151,7 +151,7 @@ export const joinChannelTopic = async (
         await pss.setPeerPublicKey(p.pubKey, channel.topic, p.address)
         logClient('add peer', channel.topic, p.pubKey)
         topic.addPeer(p.pubKey)
-        if (!contact.profile.hasStake) {
+        if (contact != null && !contact.profile.hasStake) {
           db.setContactStake(p.pubKey, true)
         }
       } catch (err) {
@@ -184,11 +184,11 @@ export const joinDirectTopic = async (
     ])
     topic.addPeer(peer.pubKey)
     addTopic(db, topic, 'DIRECT', [peer.pubKey])
-    return topic
-    if (contact && !contact.profile.hasStake) {
+    if (contact != null && !contact.profile.hasStake) {
       // If able to join stake state must have changed
       db.setContactStake(contact.profile.id, true)
     }
+    return topic
   } catch (err) {
     if (err.message.includes('No stake found') && contact) {
       db.setContactStake(contact.profile.id, false)
@@ -484,7 +484,9 @@ export const addContactRequest = async (
   db: DB,
   payload: ContactRequestPayload,
 ) => {
-  const addrHasStake = await db.contracts.walletHasStake(pubKeyToAddress(payload.profile.id))
+  const addrHasStake = await db.contracts.walletHasStake(
+    pubKeyToAddress(payload.profile.id),
+  )
   const contact = {
     profile: {
       ...payload.profile,

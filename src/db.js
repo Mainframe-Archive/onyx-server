@@ -312,8 +312,10 @@ export default class DB {
 
   setContactStake(id: string, hasStake: boolean) {
     const contact = this.getContact(id)
-    contact.profile.hasStake = hasStake
-    this.setContact(contact)
+    if (contact != null) {
+      contact.profile.hasStake = hasStake
+      this.setContact(contact)
+    }
   }
 
   addMessage(
