@@ -1,7 +1,7 @@
 // @flow
 
 import debug from 'debug'
-import type { PSS } from 'erebos'
+import type { PssAPI } from 'erebos'
 import { withFilter } from 'graphql-subscriptions'
 import { makeExecutableSchema } from 'graphql-tools'
 import GraphQLJSON from 'graphql-type-json'
@@ -138,7 +138,7 @@ type Subscription {
 }
 `
 
-export default (pss: PSS, db: DB, port: number) => {
+export default (pss: PssAPI, db: DB, port: number) => {
   const serverURL = `http://${ip.address()}:${port}/graphql`
 
   const resolvers = {

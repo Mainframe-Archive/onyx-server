@@ -106,8 +106,7 @@ type Viewer = {
   profile: ?Profile,
 }
 
-type Timer = number
-type ConvoTypings = Map<hex, Timer> // keyed by peer hex
+type ConvoTypings = Map<hex, TimeoutID> // keyed by peer hex
 
 type State = {
   address: string,
@@ -124,11 +123,7 @@ export default class DB {
   _store: Conf
   _typings: Map<hex, ConvoTypings> = new Map()
 
-  constructor(
-    contracts: Object,
-    store: ?Conf,
-    name?: string,
-  ){
+  constructor(contracts: Object, store: ?Conf, name?: string) {
     this.contracts = contracts
     this._store = store || new Conf({ configName: name || 'onyx-server' })
     if (!this._store.has('state')) {
@@ -267,8 +262,8 @@ export default class DB {
     return this.getConversations('CHANNEL')
   }
 
-  // $FlowFixMe
   getViewer(): Viewer {
+    // $FlowFixMe
     return {
       channels: this.getChannels(),
       contacts: this.getContacts(true),
