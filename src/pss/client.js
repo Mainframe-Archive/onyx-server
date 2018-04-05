@@ -1,7 +1,7 @@
 // @flow
 
 import debug from 'debug'
-import { createPSSWebSocket, encodeHex, type hex, type PSS } from 'erebos'
+import { encodeHex, type hex, PssAPI, webSocketRPC } from 'erebos'
 import { Subscriber } from 'rxjs/Subscriber'
 import type { Subscription } from 'rxjs/Subscription'
 
@@ -37,12 +37,9 @@ const topics: Map<hex, TopicSubject> = new Map()
 
 export const setupPss = async (db: DB, url: string) => {
   logClient(`connecting to Swarm ${url}`)
-  const pss = createPSSWebSocket(url)
+  const pss = new PssAPI(webSocketRPC(url))
 
-  const [id, address] = await Promise.all([
-    pss.getPublicKey(),
-    pss.getBaseAddr(),
-  ])
+  const [id, address] = await Promise.all([pss.getPublicKey(), pss.baseAddr()])
   logClient(`connected to Swarm with public key ${id}`)
 
   db.setupStore(address, id)
@@ -50,7 +47,7 @@ export const setupPss = async (db: DB, url: string) => {
   return pss
 }
 
-export const subscribeToStoredConvos = async (pss: PSS, db: DB) => {
+export const subscribeToStoredConvos = async (pss: PssAPI, db: DB) => {
   const convos = db.getConversations()
   convos.forEach(async c => {
     switch (c.type) {
@@ -98,10 +95,10 @@ export const subscribeToStoredConvos = async (pss: PSS, db: DB) => {
   })
 }
 
-export const createContactTopic = (pss: PSS, publicKey: hex): Promise<hex> =>
+export const createContactTopic = (pss: PssAPI, publicKey: hex): Promise<hex> =>
   pss.stringToTopic(`onyx:contact:${publicKey}`)
 
-export const createRandomTopic = (pss: PSS): Promise<hex> =>
+export const createRandomTopic = (pss: PssAPI): Promise<hex> =>
   pss.stringToTopic(
     Math.random()
       .toString(36)
@@ -133,7 +130,7 @@ const addTopic = (
 
 // Join new channel topic with peers identified by public key
 export const joinChannelTopic = async (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   channel: ChannelInvitePayload,
   otherPeers: Array<PeerInfo>,
@@ -154,7 +151,7 @@ export const joinChannelTopic = async (
         await pss.setPeerPublicKey(p.pubKey, channel.topic, p.address)
         logClient('add peer', channel.topic, p.pubKey)
         topic.addPeer(p.pubKey)
-        if (!contact.profile.hasStake) {
+        if (contact != null && !contact.profile.hasStake) {
           db.setContactStake(p.pubKey, true)
         }
       } catch (err) {
@@ -174,7 +171,7 @@ export const joinChannelTopic = async (
 
 // Join existing direct (p2p) topic with peer
 export const joinDirectTopic = async (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   id: hex,
   peer: PeerInfo,
@@ -187,11 +184,11 @@ export const joinDirectTopic = async (
     ])
     topic.addPeer(peer.pubKey)
     addTopic(db, topic, 'DIRECT', [peer.pubKey])
-    return topic
-    if (contact && !contact.profile.hasStake) {
+    if (contact != null && !contact.profile.hasStake) {
       // If able to join stake state must have changed
       db.setContactStake(contact.profile.id, true)
     }
+    return topic
   } catch (err) {
     if (err.message.includes('No stake found') && contact) {
       db.setContactStake(contact.profile.id, false)
@@ -231,7 +228,7 @@ export const setTyping = (topicHex: hex, typing: boolean) => {
 }
 
 const handleTopicJoined = (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   topic: TopicSubject,
   payload: TopicJoinedPayload,
@@ -268,7 +265,7 @@ const handleTopicMessage = (
 }
 
 const createChannelTopicSubscription = (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   topic: TopicSubject,
 ): Subscription => {
@@ -304,7 +301,11 @@ const createChannelTopicSubscription = (
   })
 }
 
-const createP2PTopicSubscription = (pss: PSS, db: DB, topic: TopicSubject) => {
+const createP2PTopicSubscription = (
+  pss: PssAPI,
+  db: DB,
+  topic: TopicSubject,
+) => {
   const log = debug(`onyx:pss:client:topic:p2p:${topic.id}`)
   return topic.subscribe((msg: ReceivedEvent) => {
     log('received message', msg)
@@ -331,7 +332,7 @@ const createP2PTopicSubscription = (pss: PSS, db: DB, topic: TopicSubject) => {
 }
 
 export const acceptContact = async (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   id: hex,
   request: ContactRequest,
@@ -362,7 +363,7 @@ export const acceptContact = async (
 }
 
 export const joinChannel = async (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   channel: ChannelInvitePayload,
 ) => {
@@ -390,7 +391,7 @@ export const joinChannel = async (
 }
 
 export const createChannel = async (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   subject: string,
   peers: Array<hex>,
@@ -479,11 +480,13 @@ const invitePeersToChannel = (
 }
 
 export const addContactRequest = async (
-  pss: PSS,
+  pss: PssAPI,
   db: DB,
   payload: ContactRequestPayload,
 ) => {
-  const addrHasStake = await db.contracts.walletHasStake(pubKeyToAddress(payload.profile.id))
+  const addrHasStake = await db.contracts.walletHasStake(
+    pubKeyToAddress(payload.profile.id),
+  )
   const contact = {
     profile: {
       ...payload.profile,
@@ -498,7 +501,7 @@ export const addContactRequest = async (
   return contact
 }
 
-export const requestContact = async (pss: PSS, db: DB, id: hex) => {
+export const requestContact = async (pss: PssAPI, db: DB, id: hex) => {
   const profile = db.getProfile()
   if (profile == null) {
     throw new Error('Cannot call requestContact() before profile is setup')
@@ -544,7 +547,7 @@ export const requestContact = async (pss: PSS, db: DB, id: hex) => {
 }
 
 // Setup own contact topic and start subscribing to it
-export const setupContactTopic = async (pss: PSS, db: DB) => {
+export const setupContactTopic = async (pss: PssAPI, db: DB) => {
   const profile = db.getProfile()
   if (profile == null || profile.id == null) {
     throw new Error('Cannot setup contact topic: profile is not setup')
