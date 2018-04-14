@@ -44,8 +44,8 @@ else
 fi
 
 $GODIR/build/bin/swarm \
-    --datadir $DATADIR \
-    --password $DATADIR/password \
+    --datadir $GODIR/$DATADIR \
+    --password $GODIR/$DATADIR/password \
     --verbosity 4 \
     --bzzaccount $KEY \
     --ens-api '' \
