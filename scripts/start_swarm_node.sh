@@ -29,7 +29,7 @@ make swarm
 
 if [[ ! -e $DATADIR/keystore ]]; then
   mkdir -p $DATADIR
-  passphrase=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+  passphrase=`openssl rand -base64 32`
   echo $passphrase > $DATADIR/password
   $GODIR/build/bin/geth --datadir $DATADIR account new --password $DATADIR/password
 fi
