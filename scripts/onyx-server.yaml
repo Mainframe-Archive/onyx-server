@@ -172,7 +172,7 @@ Resources:
                 }
             Policies: 
                 - PolicyName: s3write
-                  PolicyDocument: |
+                  PolicyDocument: !Sub |
                     {
                         "Statement": [
                             {
