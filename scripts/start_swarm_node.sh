@@ -5,7 +5,7 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-GIT_TAG="onyx-0.4"
+GIT_TAG="swarm-network-rewrite"
 DATADIR="$1"
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 EXT_DEPS_DIR="$SCRIPTPATH/external_deps"
