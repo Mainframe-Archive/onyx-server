@@ -1,6 +1,7 @@
 [ignore]
 .*/node_modules/graphql/.*
 <PROJECT_ROOT>/lib/.*
+<PROJECT_ROOT>/scripts/.*
 
 [include]
 
