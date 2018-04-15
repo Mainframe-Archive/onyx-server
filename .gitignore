@@ -3,3 +3,4 @@ lib
 external_deps
 certs
 .srl
+yarn-error.log
