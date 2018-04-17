@@ -148,6 +148,7 @@ export default class DB {
       this.resetState()
     }
     this._store.set('state.profile.id', id)
+    this._store.set('state.profile.hasStake', true)
     this._store.set('state.address', address)
   }
 

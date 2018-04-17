@@ -484,13 +484,10 @@ export const addContactRequest = async (
   db: DB,
   payload: ContactRequestPayload,
 ) => {
-  const addrHasStake = await db.contracts.walletHasStake(
-    pubKeyToAddress(payload.profile.id),
-  )
   const contact = {
     profile: {
       ...payload.profile,
-      hasStake: addrHasStake,
+      hasStake: true,
     },
     state: 'RECEIVED',
   }
