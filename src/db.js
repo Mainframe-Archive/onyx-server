@@ -289,11 +289,17 @@ export default class DB {
   }
 
   setConversation(convo: Conversation) {
+    const previous = this._store.get(`state.convos.${convo.id}`)
     this._store.set(`state.convos.${convo.id}`, convo)
     log('set convo', convo)
     this.pubsub.publish(
       convo.type === 'CHANNEL' ? 'channelsChanged' : 'contactsChanged',
     )
+    this.pubsub.publish('conversationChanged', {
+      id: convo.id,
+      conversation: convo,
+      previous,
+    })
   }
 
   updateConversationPointer(id: hex): ?Conversation {
@@ -314,7 +320,7 @@ export default class DB {
   setContactStake(id: string, hasStake: boolean) {
     const contact = this.getContact(id)
     if (contact != null) {
-      contact.profile.hasStake = hasStake
+      contact.profile.hasStake = true
       this.setContact(contact)
     }
   }

@@ -24,4 +24,4 @@ start({
   unsecure: program.unsecure,
   certsDir: program.certsDir,
   testNet: program.testNet,
-})
+}).catch(console.error)

@@ -9,6 +9,7 @@ import { pubKeyToAddress } from '../crypto'
 import type DB, {
   Contact,
   ContactRequest,
+  Conversation,
   ConvoType,
   MessageBlock,
   SendMessage,
@@ -113,7 +114,8 @@ const addTopic = (
   channel?: ChannelInvitePayload,
 ) => {
   topics.set(topic.id, topic)
-  if (!db.hasConversation(topic.id)) {
+  const existing = db.getConversation(topic.id)
+  if (existing == null) {
     db.setConversation({
       dark: channel ? channel.dark : false,
       id: topic.id,
@@ -125,6 +127,8 @@ const addTopic = (
       subject: channel ? channel.subject : undefined,
       type,
     })
+  } else if (peers.length != existing.peers.length) {
+    db.setConversation({ ...existing, peers })
   }
 }
 
@@ -442,7 +446,7 @@ export const resendInvites = async (
 ) => {
   const profile = db.getProfile()
   if (profile == null) {
-    throw new Error('Cannot create channel before profile is setup')
+    throw new Error('Cannot update channel before profile is setup')
   }
   const peerContacts = channelPeers.map(id => db.getContact(id)).filter(Boolean)
   const channel = {
@@ -455,6 +459,50 @@ export const resendInvites = async (
     subject,
   }
   invitePeersToChannel(channel, peerContacts)
+}
+
+export const inviteMorePeers = async (
+  pss: PssAPI,
+  db: DB,
+  chan: Conversation,
+  newPeers: Array<hex>,
+) => {
+  const profile = db.getProfile()
+  if (profile == null) {
+    throw new Error('Cannot update channel before profile is setup')
+  }
+
+  const topic = topics.get(chan.id)
+  if (topic == null) {
+    throw new Error('Topic is not setup')
+  }
+
+  const newContacts = newPeers.map(id => db.getContact(id)).filter(Boolean)
+  await Promise.all(
+    newContacts.map(p => {
+      return pss.setPeerPublicKey(p.profile.id, chan.id, p.address || '0x')
+    }),
+  )
+
+  const existingContacts = chan.peers
+    .map(id => db.getContact(id))
+    .filter(Boolean)
+  const allContacts = [...existingContacts, ...newContacts]
+
+  const peers = Array.from(new Set(allContacts.map(p => p.profile.id)))
+  topic.setPeers(peers)
+  db.setConversation({ ...chan, peers })
+
+  const channel = {
+    topic: chan.id,
+    peers: [
+      { pubKey: profile.id, address: chan.dark ? '0x' : db.getAddress() },
+      ...formatPSSPeers(allContacts, chan.dark),
+    ],
+    dark: chan.dark,
+    subject: chan.subject || '',
+  }
+  invitePeersToChannel(channel, allContacts)
 }
 
 const formatPSSPeers = (

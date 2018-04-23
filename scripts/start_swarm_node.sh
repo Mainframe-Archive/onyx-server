@@ -5,7 +5,7 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-GIT_TAG="pss-staking"
+GIT_TAG="swarm-network-rewrite"
 DATADIR="$1"
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 EXT_DEPS_DIR="$SCRIPTPATH/external_deps"
@@ -16,7 +16,7 @@ mkdir -p "$EXT_DEPS_DIR"
 if [[ ! -e $GODIR ]]; then
     echo "cloning the go-ethereum repo"
     cd "$EXT_DEPS_DIR"
-    git clone --depth 1 https://github.com/MainframeHQ/go-ethereum.git -b $GIT_TAG
+    git clone --depth 1 https://github.com/ethersphere/go-ethereum.git -b $GIT_TAG
 fi
 
 cd "$GODIR"
