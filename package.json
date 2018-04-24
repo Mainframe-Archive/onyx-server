@@ -20,7 +20,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "apollo-server-express": "^1.3.4",
+    "apollo-server-express": "^1.3.5",
     "body-parser": "^1.18.2",
     "commander": "^2.15.1",
     "conf": "^1.3.1",
@@ -31,14 +31,14 @@
     "express": "^4.16.3",
     "graphql": "^0.13.2",
     "graphql-subscriptions": "^0.5.8",
-    "graphql-tools": "^2.23.1",
-    "graphql-type-json": "^0.2.0",
+    "graphql-tools": "^2.24.0",
+    "graphql-type-json": "^0.2.1",
     "ip": "^1.1.5",
     "lodash": "^4.17.5",
     "onyx-contracts": "^0.1.0",
     "raw-body": "^2.3.2",
-    "rxjs": "^5.5.8",
-    "subscriptions-transport-ws": "^0.9.7",
+    "rxjs": "^5.5.10",
+    "subscriptions-transport-ws": "^0.9.8",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
@@ -51,9 +51,9 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "del-cli": "^1.1.0",
-    "flow-bin": "^0.69.0",
+    "flow-bin": "^0.70.0",
     "flow-copy-source": "^1.2.1",
-    "prettier": "^1.11.1"
+    "prettier": "^1.12.1"
   },
   "files": ["bin/*", "lib/*", "scripts/*", "cert-configs/*"]
 }

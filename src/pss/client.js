@@ -128,7 +128,10 @@ const addTopic = (
       type,
     })
   } else if (peers.length != existing.peers.length) {
-    db.setConversation({ ...existing, peers })
+    db.setConversation({
+      ...existing,
+      peers: Array.from(new Set([...existing.peers, ...peers])),
+    })
   }
 }
 
