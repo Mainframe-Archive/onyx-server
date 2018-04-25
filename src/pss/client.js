@@ -197,7 +197,7 @@ export const joinDirectTopic = async (
   }
 }
 
-export const sendMessage = (
+export const sendMessage = async (
   db: DB,
   topicHex: hex,
   blocks: Array<MessageBlock>,
@@ -205,6 +205,8 @@ export const sendMessage = (
   const topic = topics.get(topicHex)
   if (topic == null) {
     logClient('cannot sent message to missing topic:', topicHex)
+
+    // $FlowFixMe
     return
   }
 
@@ -212,9 +214,10 @@ export const sendMessage = (
     blocks,
     source: 'USER',
   }
-  topic.next(topicMessage(message))
-  db.addMessage(topicHex, message, true)
+  await topic.sendMessageToPeers(topicMessage(message))
+  await db.addMessage(topicHex, message, true)
 
+  // $FlowFixMe
   return message
 }
 
