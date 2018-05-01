@@ -205,9 +205,9 @@ Resources:
           ./scripts/gen-certs.sh -p $passphrase -d $hostname
 
           # Copy certificates to S3
-          aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucketName}/
-          aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${!Ref CertBucketName}/
-          aws s3 cp /root/onyx-server/certs/client-key.pem s3://${!Ref CertBucketName}/
+          aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucket}/
+          aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${!Ref CertBucket}/
+          aws s3 cp /root/onyx-server/certs/client-key.pem s3://${!Ref CertBucket}/
 
           # Make sure Onyx server will start on reboot
           echo "logfile=/root/onyx-logfile" >> /etc/rc.local
@@ -277,8 +277,8 @@ Resources:
                     "Effect": "Allow",
                     "Action": "s3:*",
                     "Resource": [
-                      "arn:aws:s3:::${!Ref CertBucketName}/*",
-                      "arn:aws:s3:::${!Ref CertBucketName}"
+                      "arn:aws:s3:::${!Ref CertBucket}/*",
+                      "arn:aws:s3:::${!Ref CertBucket}"
                     ]
                   }
                 ]
