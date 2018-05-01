@@ -123,7 +123,6 @@ Resources:
       Code:
         S3Bucket: !Sub 'binxio-public-${AWS::Region}'
         S3Key: lambdas/cfn-secret-provider-0.11.0.zip
-      FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
       Handler: index.handler
       MemorySize: 128
       Timeout: 30
@@ -136,11 +135,11 @@ Resources:
     Properties:
       Name: /mainframe/onyx-private-key
       ServiceToken: !Join
-       - ":"
-       - - arn:aws:lambda
-         - !Ref "AWS::Region"
-         - !Ref "AWS::AccountId"
-         - function:binxio-cfn-secret-provider
+        - ":"
+        - - arn:aws:lambda
+          - !Ref "AWS::Region"
+          - !Ref "AWS::AccountId"
+          - !Ref CFNSecretProvider
 
   KeyPair:
     Type: Custom::KeyPair
@@ -148,14 +147,14 @@ Resources:
     Properties:
       Name: CustomKeyPair
       PublicKeyMaterial: !GetAtt
-       - PrivateKey
-       - PublicKey
+        - PrivateKey
+        - PublicKey
       ServiceToken: !Join
-       - ":"
-       - - arn:aws:lambda
-         - !Ref "AWS::Region"
-         - !Ref "AWS::AccountId"
-         - function:binxio-cfn-secret-provider
+        - ":"
+        - - arn:aws:lambda
+          - !Ref "AWS::Region"
+          - !Ref "AWS::AccountId"
+          - !Ref CFNSecretProvider
 
   CertBucket:
     Type: AWS::S3::Bucket
@@ -164,7 +163,10 @@ Resources:
 
   EC2Instance:
     Type: AWS::EC2::Instance
-    DependsOn: CertBucket
+    DependsOn:
+     - CertBucket
+     - KeyPair
+     - InstanceProfile
     Properties:
       IamInstanceProfile: !Ref InstanceProfile
       InstanceType: !Ref InstanceType
@@ -249,43 +251,44 @@ Resources:
     Properties:
       Path: /
       RoleName: !Sub ${ResourcePrefix}-InstanceRole-${AWS::Region}
-      AssumeRolePolicyDocument: |
-          {
-            "Statement": [{
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                  "Service": "ec2.amazonaws.com"
-              }
-            }]
-          }
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
       Policies:
-        - PolicyName: s3write
-          PolicyDocument: !Sub |
-              {
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "Action": [
-                      "s3:ListAllMyBuckets",
-                      "s3:HeadBucket",
-                      "s3:ListObjects"
-                    ],
-                    "Resource": "*"
-                  },
-                  {
-                    "Effect": "Allow",
-                    "Action": "s3:*",
-                    "Resource": [
-                      "arn:aws:s3:::${!Ref CertBucket}/*",
-                      "arn:aws:s3:::${!Ref CertBucket}"
-                    ]
-                  }
-                ]
-              }
+        -
+          PolicyName: s3write
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "s3:ListAllMyBuckets"
+                  - "s3:HeadBucket"
+                  - "s3:ListObjects"
+                Resource: "*"
+              -
+                Effect: Allow
+                Action: "s3:*"
+                Resource:
+                  - !Join
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref CertBucket
+                      - "/*"
+                  - !Join
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref CertBucket
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
+    DependsOn: InstanceRole
     Properties:
       Path: /
       Roles:
