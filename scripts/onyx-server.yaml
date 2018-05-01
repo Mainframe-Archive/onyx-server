@@ -3,20 +3,24 @@ Description: >
     Created by the Mainframe Engineering Team
 Parameters:
 
-    EnvironmentName:
-        Description: An environment name that will be prefixed to resource names
-        Type: String
-
-    S3BucketName:
-        Description: The name of the S3 bucket to store the certificates in
-        AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-        ConstraintDescription: "The bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-        Type: String
-
     InstanceType:
         Description: Which instance type should we use for the Onyx Server
         Type: String
         Default: t2.micro
+
+    ResourcePrefix:
+        Description: A prefix that will be added to all to resource names. Setup multiple servers by using different prefixes for each one.
+        Type: String
+
+    S3BucketName:
+        Description: A globally unique name for an S3 bucket to store your secret client certificates in. This bucket must not exist prior to running this template.
+        AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+        ConstraintDescription: "The bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+        Type: String
+
+    CertificatePassword:
+        Description: Choose the password that will be used to protect the client certificate
+        Type: String
 
     VPC:
         Description: Choose which VPC this Onyx server should be deployed to
@@ -88,7 +92,7 @@ Resources:
             Tags:
                 -
                   Key: Name
-                  Value: !Sub ${EnvironmentName}-onyx-server
+                  Value: !Sub ${ResourcePrefix}-onyx-server
             UserData:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
@@ -108,14 +112,12 @@ Resources:
                     cd onyx-server
                     git checkout one-click-deploy
 
-                    # Generate random passphrase
-                    passphrase=`openssl rand -base64 32`
+                    passphrase='${CertificatePassword}'
                     hostname=`curl http://169.254.169.254/latest/meta-data/public-hostname`
 
                     # Generate certificates
                     ./scripts/gen-certs.sh -p $passphrase -d $hostname
 
-                    bucket='onyx-certificates'
                     # Copy certificates to S3
                     aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${S3BucketName}/
                     aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${S3BucketName}/
@@ -159,7 +161,7 @@ Resources:
         Type: AWS::IAM::Role
         Properties:
             Path: /
-            RoleName: !Sub ${EnvironmentName}-InstanceRole-${AWS::Region}
+            RoleName: !Sub ${ResourcePrefix}-InstanceRole-${AWS::Region}
             AssumeRolePolicyDocument: |
                 {
                     "Statement": [{
@@ -205,7 +207,7 @@ Resources:
     InstanceSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
-            GroupName: !Sub ${EnvironmentName}-SG
+            GroupName: !Sub ${ResourcePrefix}-SG
             GroupDescription: Allow Onyx traffic types
             VpcId: !Ref VPC
             SecurityGroupIngress:
