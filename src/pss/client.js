@@ -106,6 +106,17 @@ export const createRandomTopic = (pss: PssAPI): Promise<hex> =>
       .substr(2),
   )
 
+export const addTopicPeers = (
+  db: DB,
+  convo: Conversation,
+  peers: Array<hex>,
+) => {
+  db.setConversation({
+    ...convo,
+    peers: Array.from(new Set([...convo.peers, ...peers])),
+  })
+}
+
 const addTopic = (
   db: DB,
   topic: TopicSubject,
@@ -115,6 +126,7 @@ const addTopic = (
 ) => {
   topics.set(topic.id, topic)
   const existing = db.getConversation(topic.id)
+  logClient('addTopic', topic.id, existing == null)
   if (existing == null) {
     db.setConversation({
       dark: channel ? channel.dark : false,
@@ -128,10 +140,7 @@ const addTopic = (
       type,
     })
   } else if (peers.length != existing.peers.length) {
-    db.setConversation({
-      ...existing,
-      peers: Array.from(new Set([...existing.peers, ...peers])),
-    })
+    addTopicPeers(db, existing, peers)
   }
 }
 
@@ -251,6 +260,12 @@ const handleTopicJoined = (
     // Update contact's public key with a more precise address if provided
     pss.setPeerPublicKey(contact.profile.id, topic.id, payload.address)
   }
+
+  // Ensure peer is present in conversation
+  const convo = db.getConversation(topic.id)
+  if (convo != null && convo.peers.indexOf(payload.profile.id) === -1) {
+    addTopicPeers(db, convo, [payload.profile.id])
+  }
 }
 
 const handleTopicMessage = (
@@ -364,6 +379,7 @@ export const acceptContact = async (
     state: 'ACCEPTED',
   })
 
+  logClient('acceptContact send topicJoined')
   topic.next(topicJoined(db.getProfile(), db.getAddress()))
 
   return { topic, topicSubscription }
@@ -382,9 +398,11 @@ export const joinChannel = async (
   logClient('join channel', profile.id, channel)
 
   const otherPeers = channel.peers.filter(p => p.pubKey !== profile.id)
+  logClient('channel otherPeers', otherPeers)
   const topic = await joinChannelTopic(pss, db, channel, otherPeers)
   const topicSubscription = createChannelTopicSubscription(pss, db, topic)
 
+  logClient('joinChannel send topicJoined')
   topic.next(topicJoined(db.getProfile(), db.getAddress()))
 
   otherPeers.forEach(p => {
