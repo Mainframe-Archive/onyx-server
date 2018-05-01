@@ -143,7 +143,9 @@ Resources:
 
   KeyPair:
     Type: Custom::KeyPair
-    DependsOn: PrivateKey
+    DependsOn:
+      - CFNSecretProvider
+      - PrivateKey
     Properties:
       Name: CustomKeyPair
       PublicKeyMaterial: !GetAtt
