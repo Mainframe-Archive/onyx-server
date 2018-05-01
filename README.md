@@ -7,7 +7,7 @@ Mailboxing & data service for the [Onyx](https://github.com/MainframeHQ/onyx) ap
 The easiest way to deploy this is with our AWS CloudFormation template. To do
 this, just click on the link below.
 
-[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=OnyxServer&templateURL=https://s3-us-west-2.amazonaws.com/blockscale-cloudformation-templates-public/onyx-server.yaml)
+[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=OnyxServer&templateURL=https://s3.amazonaws.com/mainframe-cf-templates/onyx-server.yaml)
 
 ### Fetch the certificates from the new AWS stack
 

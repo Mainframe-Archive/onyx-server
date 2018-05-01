@@ -1,6 +1,6 @@
 Description: >
     This template deploys an Onyx Server
-    Created by Luke Youngblood, luke@blockscale.net
+    Created by the Mainframe Engineering Team
 Parameters:
 
     EnvironmentName:
@@ -13,7 +13,7 @@ Parameters:
         ConstraintDescription: "The bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
         Type: String
 
-    InstanceType: 
+    InstanceType:
         Description: Which instance type should we use for the Onyx Server
         Type: String
         Default: t2.micro
@@ -21,7 +21,7 @@ Parameters:
     VPC:
         Description: Choose which VPC this Onyx server should be deployed to
         Type: AWS::EC2::VPC::Id
-        
+
     KeyPair:
         Description: Select the KeyPair that you would like to use for the ECS cluster hosts
         Type: AWS::EC2::KeyPair::KeyName
@@ -117,7 +117,7 @@ Resources:
 
                     bucket='onyx-certificates'
                     # Copy certificates to S3
-                    aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${S3BucketName}/ 
+                    aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${S3BucketName}/
                     aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${S3BucketName}/
                     aws s3 cp /root/onyx-server/certs/client-key.pem s3://${S3BucketName}/
 
@@ -157,7 +157,7 @@ Resources:
 
     InstanceRole:
         Type: AWS::IAM::Role
-        Properties: 
+        Properties:
             Path: /
             RoleName: !Sub ${EnvironmentName}-InstanceRole-${AWS::Region}
             AssumeRolePolicyDocument: |
@@ -170,7 +170,7 @@ Resources:
                         }
                     }]
                 }
-            Policies: 
+            Policies:
                 - PolicyName: s3write
                   PolicyDocument: !Sub |
                     {
@@ -195,11 +195,11 @@ Resources:
                         ]
                     }
 
-    InstanceProfile: 
+    InstanceProfile:
         Type: AWS::IAM::InstanceProfile
         Properties:
             Path: /
-            Roles: 
+            Roles:
                 - !Ref InstanceRole
 
     InstanceSecurityGroup:
@@ -242,4 +242,4 @@ Outputs:
          - ""
          - - "wss://"
            - !GetAtt EC2Instance.PublicDnsName
-           - ":5000/graphql" 
+           - ":5000/graphql"
