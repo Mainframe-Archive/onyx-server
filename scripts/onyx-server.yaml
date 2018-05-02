@@ -63,11 +63,6 @@ Mappings:
 
 Resources:
 
-  LambdaBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: BucketOwnerFullControl
-
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -117,13 +112,13 @@ Resources:
   CFNSecretProvider:
     Type: AWS::Lambda::Function
     DependsOn:
-      - LambdaRole
+      - LambdaPolicy
     Properties:
       Description: CloudFormation Custom:Secret implementation
       Code:
         S3Bucket: !Sub 'binxio-public-${AWS::Region}'
         S3Key: lambdas/cfn-secret-provider-0.11.0.zip
-      Handler: index.handler
+      Handler: secrets.handler
       MemorySize: 128
       Timeout: 30
       Role: !GetAtt 'LambdaRole.Arn'
@@ -133,7 +128,8 @@ Resources:
     Type: Custom::RSAKey
     DependsOn: CFNSecretProvider
     Properties:
-      Name: /mainframe/onyx-private-key
+      Name: !Sub '/mainframe/${ResourcePrefix}-onyx-private-key'
+      KeyAlias: alias/aws/ssm
       ServiceToken: !Join
         - ":"
         - - arn:aws:lambda
@@ -141,13 +137,13 @@ Resources:
           - !Ref "AWS::AccountId"
           - !Ref CFNSecretProvider
 
-  KeyPair:
+  CustomKeyPair:
     Type: Custom::KeyPair
     DependsOn:
       - CFNSecretProvider
       - PrivateKey
     Properties:
-      Name: CustomKeyPair
+      Name: !Sub '${ResourcePrefix}CustomKeyPair'
       PublicKeyMaterial: !GetAtt
         - PrivateKey
         - PublicKey
@@ -167,13 +163,13 @@ Resources:
     Type: AWS::EC2::Instance
     DependsOn:
      - CertBucket
-     - KeyPair
+     - CustomKeyPair
      - InstanceProfile
     Properties:
       IamInstanceProfile: !Ref InstanceProfile
       InstanceType: !Ref InstanceType
       ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
-      KeyName: !Ref KeyPair
+      KeyName: !Sub '${ResourcePrefix}CustomKeyPair'
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
           DeviceIndex: 0
