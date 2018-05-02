@@ -45,6 +45,8 @@ else
 fi
 
 $GODIR/build/bin/swarm \
+    --store.size 1 \
+    --store.cache.size 1 \
     --port $PORT \
     --datadir $DATADIR \
     --password $DATADIR/password \
