@@ -201,12 +201,11 @@ export const sendMessage = async (
   db: DB,
   topicHex: hex,
   blocks: Array<MessageBlock>,
-): ?SendMessage => {
+): Promise<?SendMessage> => {
   const topic = topics.get(topicHex)
   if (topic == null) {
     logClient('cannot sent message to missing topic:', topicHex)
 
-    // $FlowFixMe
     return
   }
 
@@ -215,9 +214,8 @@ export const sendMessage = async (
     source: 'USER',
   }
   await topic.sendMessageToPeers(topicMessage(message))
-  await db.addMessage(topicHex, message, true)
+  db.addMessage(topicHex, message, true)
 
-  // $FlowFixMe
   return message
 }
 

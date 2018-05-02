@@ -55,7 +55,7 @@ export class TopicSubject extends AnonymousSubject<Object> {
     log('setup')
   }
 
-  async sendMessageToPeers(data: TopicMessageEvent): Promise<*> {
+  async sendMessageToPeers(data: TopicMessageEvent): Promise<void> {
     this._log('send to all', data)
     const msg = encodeProtocol(data)
 
