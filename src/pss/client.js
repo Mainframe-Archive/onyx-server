@@ -213,6 +213,22 @@ export const joinDirectTopic = async (
   }
 }
 
+export const sendProfileUpdate = (db: DB, topicHex: hex) => {
+  const profile = db.getProfile()
+  if (profile == null) {
+    logClient('cannot send profile before it is setup')
+    return
+  }
+
+  const topic = topics.get(topicHex)
+  if (topic == null) {
+    logClient('cannot sent message to missing topic:', topicHex)
+    return
+  }
+
+  topic.next(topicJoined(profile, db.getAddress()))
+}
+
 export const sendMessage = (
   db: DB,
   topicHex: hex,
@@ -249,21 +265,28 @@ const handleTopicJoined = (
   topic: TopicSubject,
   payload: TopicJoinedPayload,
 ) => {
-  if (payload.profile == null || !payload.profile.id) {
+  if (payload.profile == null || payload.profile.id == null) {
     return
   }
+
   const contact = db.getContact(payload.profile.id)
   if (
     contact != null &&
     (!contact.address || contact.address.length < payload.address.length)
   ) {
+    logClient('add peer address for topic:', topic.id, payload.address)
     // Update contact's public key with a more precise address if provided
     pss.setPeerPublicKey(contact.profile.id, topic.id, payload.address)
   }
 
+  // $FlowFixMe: profile object
+  topic.addPeer(payload.profile.id)
+
   // Ensure peer is present in conversation
   const convo = db.getConversation(topic.id)
+  // $FlowFixMe: profile object
   if (convo != null && convo.peers.indexOf(payload.profile.id) === -1) {
+    // $FlowFixMe: profile object
     addTopicPeers(db, convo, [payload.profile.id])
   }
 }
@@ -309,9 +332,9 @@ const createChannelTopicSubscription = (
         db.upsertContact({ profile: msg.payload.profile })
         break
       case 'TOPIC_JOINED':
-        handleTopicJoined(pss, db, topic, msg.payload)
         // Always update latest profile provided by the user
         db.upsertContact({ profile: msg.payload.profile })
+        handleTopicJoined(pss, db, topic, msg.payload)
         break
       case 'TOPIC_MESSAGE':
       case 'TOPIC_TYPING':
@@ -336,12 +359,12 @@ const createP2PTopicSubscription = (
         joinChannel(pss, db, msg.payload)
         break
       case 'TOPIC_JOINED':
-        handleTopicJoined(pss, db, topic, msg.payload)
         db.upsertContact({
           address: msg.payload.address,
           profile: msg.payload.profile,
           state: 'ACCEPTED',
         })
+        handleTopicJoined(pss, db, topic, msg.payload)
         break
       case 'TOPIC_MESSAGE':
       case 'TOPIC_TYPING':

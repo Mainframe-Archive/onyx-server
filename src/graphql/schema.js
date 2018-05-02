@@ -15,9 +15,11 @@ import {
   resendInvites,
   inviteMorePeers,
   requestContact,
+  sendProfileUpdate,
   sendMessage,
   setTyping,
 } from '../pss/client'
+import { CHAN_TOPIC } from '../summit/shared-channel'
 
 const log = debug('onyx:graphql:schema')
 
@@ -227,6 +229,8 @@ export default (pss: PssAPI, db: DB, port: number) => {
         const profile = db.getProfile()
         const updatedProfile = Object.assign(profile, input)
         db.setProfile(updatedProfile)
+        // Swarm summit logic: send profile update in shared channel
+        sendProfileUpdate(db, CHAN_TOPIC)
         return updatedProfile
       },
       resendInvites: async (root, { id }) => {

@@ -7,17 +7,16 @@ import fetch from 'node-fetch'
 import type DB from '../db'
 import { addTopicPeers, joinChannel } from '../pss/client'
 
+export const CHAN_TOPIC = '0x1a508ad8'
+
 const CHAN_SUBJECT = 'Welcome'
-const CHAN_TOPIC = '0x1a508ad8'
-// TODO: public server
-const KEYS_LIST_URL = 'http://localhost:5050/'
+// TODO: change `test` with other key for Swarm summit before releasing
+const KEYS_LIST_URL = 'https://summit-peers.herokuapp.com/test/'
 
 const dbg = debug('pss:summit')
 
-const getPubKeys = async (addKey?: string) => {
-  const res = addKey
-    ? await fetch(KEYS_LIST_URL + addKey, { method: 'PUT' })
-    : await fetch(KEYS_LIST_URL)
+const getPubKeys = async (addKey: string) => {
+  const res = await fetch(KEYS_LIST_URL + addKey, { method: 'PUT' })
   if (!res.ok) {
     throw new Error(res.statusText || 'Error ' + res.statusCode)
   }
