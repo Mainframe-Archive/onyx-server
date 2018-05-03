@@ -197,14 +197,15 @@ export const joinDirectTopic = async (
   }
 }
 
-export const sendMessage = (
+export const sendMessage = async (
   db: DB,
   topicHex: hex,
   blocks: Array<MessageBlock>,
-): ?SendMessage => {
+): Promise<?SendMessage> => {
   const topic = topics.get(topicHex)
   if (topic == null) {
     logClient('cannot sent message to missing topic:', topicHex)
+
     return
   }
 
@@ -212,7 +213,7 @@ export const sendMessage = (
     blocks,
     source: 'USER',
   }
-  topic.next(topicMessage(message))
+  await topic.sendMessageToPeers(topicMessage(message))
   db.addMessage(topicHex, message, true)
 
   return message
