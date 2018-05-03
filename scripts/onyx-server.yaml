@@ -197,7 +197,7 @@ Resources:
           yum -y install git jq golang
           git clone https://github.com/MainframeHQ/onyx-server.git
           cd onyx-server
-          git checkout one-click-deploy
+          git checkout swarm-summit-18
 
           passphrase='${CertificatePassword}'
           hostname=`curl http://169.254.169.254/latest/meta-data/public-hostname`
@@ -206,7 +206,7 @@ Resources:
           ./scripts/gen-certs.sh -p $passphrase -d $hostname
 
           # Copy certificates to S3
-          echo "aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucket}/" >> scriptlog
+          echo "aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucket}/" >> ../scriptlog
           aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucket}/
           aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${!Ref CertBucket}/
           aws s3 cp /root/onyx-server/certs/client-key.pem s3://${!Ref CertBucket}/
