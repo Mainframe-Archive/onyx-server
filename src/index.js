@@ -49,21 +49,6 @@ const start = async (opts: Options) => {
   if (profile == null) {
     throw new Error('Invalid setup')
   }
-  const addr = pubKeyToAddress(profile.id)
-
-  // Check if address has stake, throw otherwise
-  let addrHasStake
-  try {
-    addrHasStake = await db.contracts.walletHasStake(addr)
-  } catch (err) {
-    console.warn(`Could not check stake for address ${addr}`, err)
-    addrHasStake = false
-  }
-  if (!addrHasStake) {
-    const err: Object = new Error(`Missing stake for address ${addr}`)
-    err.address = addr
-    throw err
-  }
 
   // Start listening to the "contact request" topic and handle these requests
   await setupContactTopic(pss, db)

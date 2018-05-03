@@ -3,6 +3,7 @@
 .*/node_modules/oboe/test/json/incomplete.json
 .*/node_modules/rx-socket/lib/index.js.flow
 <PROJECT_ROOT>/lib/.*
+<PROJECT_ROOT>/scripts/external_deps/.*
 
 [include]
 

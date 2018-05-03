@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <data-directory>"
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 <data-directory> <port=30999> <wsport=8546>"
   exit 1
 fi
 
-GIT_TAG="pss-staking"
+GIT_TAG="swarm-network-rewrite"
 DATADIR="$1"
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 EXT_DEPS_DIR="$SCRIPTPATH/external_deps"
 GODIR="$EXT_DEPS_DIR/go-ethereum"
+PORT=${2:-30999}
+WSPORT=${3:-8546}
 
 mkdir -p "$EXT_DEPS_DIR"
 
 if [[ ! -e $GODIR ]]; then
     echo "cloning the go-ethereum repo"
     cd "$EXT_DEPS_DIR"
-    git clone --depth 1 https://github.com/MainframeHQ/go-ethereum.git -b $GIT_TAG
+    git clone --depth 1 https://github.com/ethersphere/go-ethereum.git -b $GIT_TAG
 fi
 
 cd "$GODIR"
@@ -43,14 +45,14 @@ else
 fi
 
 $GODIR/build/bin/swarm \
+    --store.size 1 \
+    --store.cache.size 1 \
+    --port $PORT \
     --datadir $DATADIR \
     --password $DATADIR/password \
     --verbosity 4 \
     --bzzaccount $KEY \
-    --ens-api 'https://ropsten.infura.io/' \
-    --pss \
-    --bzznetworkid 922 \
-    --bootnodes enode://e834e83b4ed693b98d1a31d47b54f75043734c6c77d81137830e657e8b005a8f13b4833efddbd534f2c06636574d1305773648f1f39dd16c5145d18402c6bca3@52.51.239.180:30399 \
+    --bootnodes enode://867ba5f6ac80bec876454caa80c3d5b64579828bd434a972bd8155060cac36226ba6e4599d955591ebdd1b2670da13cbaba3878928f3cd23c55a4e469a927870@13.79.37.4:30399 \
     --ws \
+    --wsport $WSPORT \
     --wsorigins '*'
-

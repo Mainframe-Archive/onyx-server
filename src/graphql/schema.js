@@ -13,6 +13,7 @@ import {
   acceptContact,
   createChannel,
   resendInvites,
+  inviteMorePeers,
   requestContact,
   sendMessage,
   setTyping,
@@ -90,6 +91,11 @@ input ChannelInput {
   dark: Boolean!
 }
 
+input InviteMoreInput {
+  id: ID!
+  peers: [ID!]!
+}
+
 input MessageInput {
   convoID: ID!
   blocks: [JSON!]!
@@ -126,6 +132,7 @@ type Mutation {
   setTyping(input: TypingInput!): Conversation!
   updatePointer(id: ID!): Conversation!
   resendInvites(id: ID!): Conversation!
+  inviteMore(input: InviteMoreInput!): Conversation
   updateProfile(input: ProfileInput!): Profile!
 }
 
@@ -134,6 +141,7 @@ type Subscription {
   contactChanged(id: ID!): Contact!
   contactRequested: Profile!
   contactsChanged: Viewer!
+  conversationPeersChanged(id: ID!): Conversation!
   messageAdded(id: ID!): MessageAddedPayload!
   typingsChanged(id: ID!): [Profile!]!
 }
@@ -230,6 +238,14 @@ export default (pss: PssAPI, db: DB, port: number) => {
         resendInvites(db, convo.id, convo.dark, convo.subject, convo.peers)
         return convo
       },
+      inviteMore: async (root, { input }) => {
+        const convo = db.getConversation(input.id)
+        if (convo == null) {
+          throw new Error('Invalid convo id')
+        }
+        inviteMorePeers(pss, db, convo, input.peers)
+        return convo
+      },
     },
     Subscription: {
       channelsChanged: {
@@ -261,6 +277,22 @@ export default (pss: PssAPI, db: DB, port: number) => {
         resolve: () => {
           log('trigger contactsChanged subscription')
           return db.getViewer()
+        },
+      },
+      conversationPeersChanged: {
+        subscribe: withFilter(
+          () => db.pubsub.asyncIterator('conversationChanged'),
+          (payload, variables) => {
+            return (
+              payload.id === variables.id &&
+              payload.previous != null &&
+              payload.previous.peers.length !==
+                payload.conversation.peers.length
+            )
+          },
+        ),
+        resolve: payload => {
+          return db.getConversation(payload.id, true)
         },
       },
       messageAdded: {

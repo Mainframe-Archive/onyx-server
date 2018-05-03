@@ -5,6 +5,7 @@ import type { hex, PssAPI } from 'erebos'
 import { Observable } from 'rxjs'
 import { AnonymousSubject } from 'rxjs/Subject'
 import { Subscriber } from 'rxjs/Subscriber'
+import { filter, map } from 'rxjs/operators'
 
 import {
   decodeProtocol,
@@ -22,35 +23,33 @@ export class TopicSubject extends AnonymousSubject<Object> {
 
   constructor(pss: PssAPI, topic: hex, subscription: hex) {
     const log = debug(`onyx:pss:topic:${topic}`)
-    const peers = new Set()
 
-    const observer = new Subscriber((data: Object) => {
-      log('send to all', data)
-      const msg = encodeProtocol(data)
-      peers.forEach(key => {
-        pss.sendAsym(key, topic, msg)
-      })
-    })
-
-    const observable = pss
-      .createSubscription(subscription)
-      // $FlowFixMe
-      .map(evt => {
+    const observable = pss.createSubscription(subscription).pipe(
+      map(evt => {
         const data = decodeProtocol(evt.Msg)
         if (evt.Key && data) {
           return { sender: evt.Key, ...data }
         } else {
           log('invalid message from subscription', evt)
         }
-      })
-      .filter(Boolean)
+      }),
+      filter(Boolean),
+    )
 
     // $FlowFixMe: Subscriber type
-    super(observer, observable)
+    super(null, observable)
     this.id = topic
     this._log = log
-    this._peers = peers
+    this._peers = new Set()
     this._pss = pss
+    // $FlowFixMe: Subscriber type
+    this.destination = new Subscriber((data: Object) => {
+      log('send to all', data)
+      const msg = encodeProtocol(data)
+      this._peers.forEach(key => {
+        pss.sendAsym(key, topic, msg)
+      })
+    })
 
     log('setup')
   }
@@ -64,6 +63,11 @@ export class TopicSubject extends AnonymousSubject<Object> {
     )
 
     await Promise.all(sendMessages)
+  }
+
+  setPeers(peers: Array<hex>): this {
+    this._peers = new Set(peers)
+    return this
   }
 
   addPeer(key: hex): this {
