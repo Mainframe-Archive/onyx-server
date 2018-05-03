@@ -7,7 +7,12 @@ import { AnonymousSubject } from 'rxjs/Subject'
 import { Subscriber } from 'rxjs/Subscriber'
 import { filter, map } from 'rxjs/operators'
 
-import { decodeProtocol, encodeProtocol, type ProtocolEvent } from './protocol'
+import {
+  decodeProtocol,
+  encodeProtocol,
+  type ProtocolEvent,
+  type TopicMessageEvent,
+} from './protocol'
 
 export class TopicSubject extends AnonymousSubject<Object> {
   id: hex
@@ -47,6 +52,17 @@ export class TopicSubject extends AnonymousSubject<Object> {
     })
 
     log('setup')
+  }
+
+  async sendMessageToPeers(data: TopicMessageEvent): Promise<void> {
+    this._log('send to all', data)
+    const msg = encodeProtocol(data)
+
+    const sendMessages = Array.from(this._peers).map(key =>
+      this._pss.sendAsym(key, this.id, msg),
+    )
+
+    await Promise.all(sendMessages)
   }
 
   setPeers(peers: Array<hex>): this {
