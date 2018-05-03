@@ -182,11 +182,11 @@ Resources:
       UserData:
         "Fn::Base64": !Sub |
           #!/bin/bash
-          # NPM Install
-          set -x
+
           cd /root
           . /root/.bash_profile
           export HOME=/root
+
           curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
           . /root/.nvm/nvm.sh
           nvm install --lts
@@ -206,10 +206,9 @@ Resources:
           ./scripts/gen-certs.sh -p $passphrase -d $hostname
 
           # Copy certificates to S3
-          echo "aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucket}/" >> ../scriptlog
-          aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${!Ref CertBucket}/
-          aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${!Ref CertBucket}/
-          aws s3 cp /root/onyx-server/certs/client-key.pem s3://${!Ref CertBucket}/
+          aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${CertBucket}/
+          aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${CertBucket}/
+          aws s3 cp /root/onyx-server/certs/client-key.pem s3://${CertBucket}/
 
           # Make sure Onyx server will start on reboot
           echo "logfile=/root/onyx-logfile" >> /etc/rc.local
