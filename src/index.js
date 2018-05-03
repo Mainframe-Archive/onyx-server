@@ -10,6 +10,7 @@ import {
   setupContactTopic,
   subscribeToStoredConvos,
 } from './pss/client'
+import { joinSummitChannel } from './summit/shared-channel'
 import createServer from './server'
 
 const { ONYX_PORT, SWARM_HTTP_URL, SWARM_WS_URL, WEB3_URL } = process.env
@@ -40,20 +41,23 @@ const start = async (opts: Options) => {
   // Setup smart contracts (defaults to Mainnet)
   const contracts = createContracts(opts.testNet ? 'TESTNET' : 'MAINNET')
   // Setup DB using provided store (optional)
-  const db = new DB(contracts, opts.store, `onyx-server-${port}`)
+  const db = new DB(contracts, opts.store, `swarm-summit-${port}`)
   // Connect to local Swarm node, this also makes the node's address and public key available in the db module
   const pss = await setupPss(db, wsUrl)
 
-  // Derive wallet address from public key (stored as profile ID during setup)
+  // Ensure profile is setup
   const profile = db.getProfile()
   if (profile == null) {
     throw new Error('Invalid setup')
   }
 
+  // /!\ Setup calls order matter, they affect the local state
   // Start listening to the "contact request" topic and handle these requests
   await setupContactTopic(pss, db)
   // Set subscriptions for stored convos
   await subscribeToStoredConvos(pss, db)
+  // SWARM SUMMIT: join shared channel
+  await joinSummitChannel(pss, db)
   // Start the BZZ and GraphQL server
   const server = await createServer(
     pss,

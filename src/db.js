@@ -188,7 +188,13 @@ export default class DB {
   }
 
   resetTyping(convoID: hex, peerID: hex) {
-    return setTimeout(this.setTyping, TYPING_TIMEOUT, convoID, peerID, false)
+    return setTimeout(
+      this.setTyping.bind(this),
+      TYPING_TIMEOUT,
+      convoID,
+      peerID,
+      false,
+    )
   }
 
   getAddress(): hex {

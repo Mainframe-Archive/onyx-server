@@ -106,6 +106,17 @@ export const createRandomTopic = (pss: PssAPI): Promise<hex> =>
       .substr(2),
   )
 
+export const addTopicPeers = (
+  db: DB,
+  convo: Conversation,
+  peers: Array<hex>,
+) => {
+  db.setConversation({
+    ...convo,
+    peers: Array.from(new Set([...convo.peers, ...peers])),
+  })
+}
+
 const addTopic = (
   db: DB,
   topic: TopicSubject,
@@ -115,6 +126,7 @@ const addTopic = (
 ) => {
   topics.set(topic.id, topic)
   const existing = db.getConversation(topic.id)
+  logClient('addTopic', topic.id, existing == null)
   if (existing == null) {
     db.setConversation({
       dark: channel ? channel.dark : false,
@@ -128,10 +140,7 @@ const addTopic = (
       type,
     })
   } else if (peers.length != existing.peers.length) {
-    db.setConversation({
-      ...existing,
-      peers: Array.from(new Set([...existing.peers, ...peers])),
-    })
+    addTopicPeers(db, existing, peers)
   }
 }
 
@@ -204,6 +213,22 @@ export const joinDirectTopic = async (
   }
 }
 
+export const sendProfileUpdate = (db: DB, topicHex: hex) => {
+  const profile = db.getProfile()
+  if (profile == null) {
+    logClient('cannot send profile before it is setup')
+    return
+  }
+
+  const topic = topics.get(topicHex)
+  if (topic == null) {
+    logClient('cannot sent message to missing topic:', topicHex)
+    return
+  }
+
+  topic.next(topicJoined(profile, db.getAddress()))
+}
+
 export const sendMessage = async (
   db: DB,
   topicHex: hex,
@@ -212,7 +237,6 @@ export const sendMessage = async (
   const topic = topics.get(topicHex)
   if (topic == null) {
     logClient('cannot sent message to missing topic:', topicHex)
-
     return
   }
 
@@ -241,16 +265,29 @@ const handleTopicJoined = (
   topic: TopicSubject,
   payload: TopicJoinedPayload,
 ) => {
-  if (payload.profile == null || !payload.profile.id) {
+  if (payload.profile == null || payload.profile.id == null) {
     return
   }
+
   const contact = db.getContact(payload.profile.id)
   if (
     contact != null &&
     (!contact.address || contact.address.length < payload.address.length)
   ) {
+    logClient('add peer address for topic:', topic.id, payload.address)
     // Update contact's public key with a more precise address if provided
     pss.setPeerPublicKey(contact.profile.id, topic.id, payload.address)
+  }
+
+  // $FlowFixMe: profile object
+  topic.addPeer(payload.profile.id)
+
+  // Ensure peer is present in conversation
+  const convo = db.getConversation(topic.id)
+  // $FlowFixMe: profile object
+  if (convo != null && convo.peers.indexOf(payload.profile.id) === -1) {
+    // $FlowFixMe: profile object
+    addTopicPeers(db, convo, [payload.profile.id])
   }
 }
 
@@ -295,9 +332,9 @@ const createChannelTopicSubscription = (
         db.upsertContact({ profile: msg.payload.profile })
         break
       case 'TOPIC_JOINED':
-        handleTopicJoined(pss, db, topic, msg.payload)
         // Always update latest profile provided by the user
         db.upsertContact({ profile: msg.payload.profile })
+        handleTopicJoined(pss, db, topic, msg.payload)
         break
       case 'TOPIC_MESSAGE':
       case 'TOPIC_TYPING':
@@ -322,12 +359,12 @@ const createP2PTopicSubscription = (
         joinChannel(pss, db, msg.payload)
         break
       case 'TOPIC_JOINED':
-        handleTopicJoined(pss, db, topic, msg.payload)
         db.upsertContact({
           address: msg.payload.address,
           profile: msg.payload.profile,
           state: 'ACCEPTED',
         })
+        handleTopicJoined(pss, db, topic, msg.payload)
         break
       case 'TOPIC_MESSAGE':
       case 'TOPIC_TYPING':
@@ -365,6 +402,7 @@ export const acceptContact = async (
     state: 'ACCEPTED',
   })
 
+  logClient('acceptContact send topicJoined')
   topic.next(topicJoined(db.getProfile(), db.getAddress()))
 
   return { topic, topicSubscription }
@@ -383,9 +421,11 @@ export const joinChannel = async (
   logClient('join channel', profile.id, channel)
 
   const otherPeers = channel.peers.filter(p => p.pubKey !== profile.id)
+  logClient('channel otherPeers', otherPeers)
   const topic = await joinChannelTopic(pss, db, channel, otherPeers)
   const topicSubscription = createChannelTopicSubscription(pss, db, topic)
 
+  logClient('joinChannel send topicJoined')
   topic.next(topicJoined(db.getProfile(), db.getAddress()))
 
   otherPeers.forEach(p => {
