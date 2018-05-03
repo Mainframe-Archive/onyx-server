@@ -2,6 +2,28 @@
 
 Mailboxing & data service for the [Onyx](https://github.com/MainframeHQ/onyx) app.
 
+## Setting up an Onyx server on AWS
+
+The easiest way to deploy this is with our AWS CloudFormation template. To do
+this, just click on the link below.
+
+[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=OnyxServer&templateURL=https://s3.amazonaws.com/mainframe-cf-templates/onyx-server.yaml)
+
+### Fetch the certificates from the new AWS stack
+
+In order to connect to the server, the client will need to use the right
+certificates - otherwise the connection will be rejected. They are generated on
+the server and you need to fetch them first. If you look at the outputs of your
+AWS stack, one of them should be a link to the S3 bucket where your certs are
+stored. Clicking the link will take you to a page where you can download those
+from the AWS console.
+
+The other output you will see listed is the URL you will use to connect your Onyx
+client to the server. It should begin with *wss://*. Copy that and paste it into
+your client on startup when it asks you for `Onyx server websocket url`. Then,
+when prompted, select and upload the three cert/key files you just downloaded
+from the AWS console. You are now connected!
+
 ## Prerequisites
 
 [Node](https://nodejs.org/en/) v8+ with [npm](https://www.npmjs.com/).
@@ -36,115 +58,18 @@ DEBUG="onyx*" onyx-server
 
 ### Connection security
 
-The Onyx client connects to Onyx server using a WebSocket, and so uses TLS certificates to authenticate and encrypt the connection.
-Use of client certificates is enforced so that only your clients with the correct certificate will be allowed to connect to the server, others are rejected.
-For mobile clients, where it can be more difficult to handle cert files, the server allows clients accessing the cert endpoint to download a password-encrypted p12 client cert.
-For convenience, you can use the provided script to generate a set of unique self-signed certificates.
+The Onyx client connects to Onyx server using a WebSocket, and so uses TLS
+certificates to authenticate and encrypt the connection. Use of client
+certificates is enforced so that only your clients with the correct certificate
+will be allowed to connect to the server, others are rejected. For mobile
+clients, where it can be more difficult to handle cert files, the server allows
+clients accessing the cert endpoint to download a password-encrypted p12 client
+cert. For convenience, you can use the provided script to generate a set of
+unique self-signed certificates.
 
 ```sh
 ./scripts/gen-certs.sh -p <certificate-password> -i <ip-address-to-certify> -d <domain-to-certify>
 ```
-
-### Setting up an Onyx server on AWS
-
-You can use a pre-built [AMI](https://en.wikipedia.org/wiki/Amazon_Machine_Image)
-to conveniently set up an Onyx server on AWS.
-
-To do it, make sure you have an AWS account and your AWS CLI is configured to
-use the `eu-west-1` (Ireland) region as default. We're going to assume you have a
-[VPC](https://eu-west-1.console.aws.amazon.com/vpc/home?region=eu-west-1#)
-configured in that region.
-
-Aside from a VPC and an Internet Gateway, the
-[Route Table](https://eu-west-1.console.aws.amazon.com/vpc/home?region=eu-west-1#routetables:)
-has to be configured for this VPC, with routes set like these:
-
-| Destination | Target                      | Status | Propagated |
-| ---         | ----                        | ---    | ---        |
-| 10.0.0.0/16 | local                       | Active | No         |
-| 0.0.0.0/0   | \<INTERNET GATEWAY ID HERE> | Active | No         |
-
-#### 1. Create a security group for your Onyx Server
-
-Go to [security group management](https://eu-west-1.console.aws.amazon.com/ec2/v2/home?region=eu-west-1#SecurityGroups:sort=groupId)
-in the AWS dashboard and create a new security group. Make sure you're creating
-it in the right vpc. Set the following group rules:
-
-**Inbound**
-
-| Type            | Protocol | Port Range | Source    | Description    |
-| ---             | ---      |        --- | ---       | ---            |
-| SSH (22)        | TCP      |         22 | 0.0.0.0/0 | SSH            |
-| Custom TCP Rule | TCP      |      30399 | 0.0.0.0/0 | swarm TCP      |
-| Custom UDP Rule | UDP      |      30399 | 0.0.0.0/0 | swarm UDP      |
-| Custom TCP Rule | TCP      |       5000 | 0.0.0.0/0 | Onyx interface |
-| Custom TCP Rule | TCP      |       5002 | 0.0.0.0/0 | cert endpoint  |
-
-**Outbound**
-
-| Type        | Protocol | Port Range | Source    | Description |
-| ---         | ---      | ---        | ---       | ---         |
-| ALL Traffic | ALL      | ALL        | 0.0.0.0/0 | ALL Traffic |
-
-#### 2. Create a subnet for your Onyx server
-
-Go to [subnet management](https://eu-west-1.console.aws.amazon.com/vpc/home?region=eu-west-1#subnets:)
-in the AWS dashboard and create a new subnet in your VPC. Make sure it's within
-the vpc CIDR range. For example if the VPC CIDR is `10.0.0.0/16`, the sg
-IPv4 CIDR block can be `10.0.1.0/24`.
-
-#### 3. Create an SSH key
-You're going to use it to connect to the Onyx server EC2 node.
-
-```bash
-$ mkdir ~/ssh
-$ aws ec2 create-key-pair --key-name my_key --output text --query KeyMaterial > ~/ssh/my_key.pem
-$ chmod 400 ~/ssh/my_key.pem
-```
-
-#### 4. Launch the Onyx server
-
-Make sure you have [AWS CLI](https://aws.amazon.com/cli/) installed and configured.
-In terminal, run the following command:
-
-Find your security group and subnet ids, which should be something like `sg-XXXXXXXX`
-and `subnet-XXXXXXXX`, respectively. Use them in the following command
-
-```bash
-$ aws ec2 run-instances \
-    --image-id ami-1a066763 \
-    --instance-type t2.micro \
-    --key-name my_key \
-    --security-group-ids <SG ID HERE> \
-    --subnet-id <SUBNET ID HERE> \
-    --tag-specification "ResourceType=instance,Tags=[{Key=Name,Value=my_onyx_node}]" \
-    --associate-public-ip-address
-```
-
-This will launch your personal Onyx server. It will generate an
-account for you.
-
-#### 5. Fetch the certificates from the node
-
-In order to connect to the server, the client will need to use the right
-certificates - otherwise the connection will be rejected. They are generated on
-the server and you need to fetch them first.
-
-Find the public IP of the node you created
-[here](https://eu-west-1.console.aws.amazon.com/ec2/v2/home?region=eu-west-1#Instances:sort=instanceId)
-and copy the relevant files from it:
-
-```bash
-$ scp -i ~/ssh/my_key.pem ubuntu@<NODE PUBLIC IP HERE>:"~/certs/ca-crt.pem ~/certs/client-crt.pem ~/certs/client-key.pem" .
-```
-
-#### 6. Connect to your Onyx server
-
-Launch Onyx and as the `Onyx server websocket url` use
-`wss://<NODE PUBLIC IP HERE>:5000/graphql`. When prompted for the certificates
-use the one you downloaded in the previous step.
-
-You're connected!
 
 ### Development
 

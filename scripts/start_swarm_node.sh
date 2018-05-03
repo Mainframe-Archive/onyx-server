@@ -5,7 +5,7 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-GIT_TAG="pss-staking"
+GIT_TAG="swarm-network-rewrite"
 DATADIR="$1"
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 EXT_DEPS_DIR="$SCRIPTPATH/external_deps"
@@ -29,7 +29,8 @@ make swarm
 
 if [[ ! -e $DATADIR/keystore ]]; then
   mkdir -p $DATADIR
-  echo 'secret' > $DATADIR/password
+  passphrase=`openssl rand -base64 32`
+  echo $passphrase > $DATADIR/password
   $GODIR/build/bin/geth --datadir $DATADIR account new --password $DATADIR/password
 fi
 
@@ -43,14 +44,13 @@ else
 fi
 
 $GODIR/build/bin/swarm \
-    --datadir $DATADIR \
-    --password $DATADIR/password \
+    --datadir $GODIR/$DATADIR \
+    --password $GODIR/$DATADIR/password \
     --verbosity 4 \
     --bzzaccount $KEY \
-    --ens-api 'https://ropsten.infura.io/' \
+    --ens-api '' \
     --pss \
     --bzznetworkid 922 \
     --bootnodes enode://e834e83b4ed693b98d1a31d47b54f75043734c6c77d81137830e657e8b005a8f13b4833efddbd534f2c06636574d1305773648f1f39dd16c5145d18402c6bca3@52.51.239.180:30399 \
     --ws \
     --wsorigins '*'
-
