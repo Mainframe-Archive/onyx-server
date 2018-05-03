@@ -254,17 +254,19 @@ export default class DB {
     }
   }
 
-  getContacts(withConvo: boolean = false) {
+  getContacts(withConvo: boolean = false): Array<Contact | ContactData> {
     const storedContacts = this._store.get('state.contacts')
-    return Object.keys(storedContacts).map(id => this.getContact(id, withConvo))
+    return Object.keys(storedContacts)
+      .map(id => this.getContact(id, withConvo))
+      .filter(Boolean)
   }
 
-  getConversations(filterType?: ConvoType) {
+  getConversations(filterType?: ConvoType): Array<ConversationData> {
     const storedConvos = this._store.get('state.convos')
-    const convos = Object.keys(storedConvos).map(id =>
-      this.getConversation(id, true),
-    )
-    return filterType ? convos.filter(c => c && c.type === filterType) : convos
+    const convos = Object.keys(storedConvos)
+      .map(id => this.getConversation(id, true))
+      .filter(Boolean)
+    return filterType ? convos.filter(c => c.type === filterType) : convos
   }
 
   getChannels() {
