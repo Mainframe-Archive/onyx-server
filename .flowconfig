@@ -3,7 +3,11 @@
 .*/node_modules/oboe/test/json/incomplete.json
 .*/node_modules/rx-socket/lib/index.js.flow
 <PROJECT_ROOT>/lib/.*
+<<<<<<< HEAD
 <PROJECT_ROOT>/scripts/external_deps/.*
+=======
+<PROJECT_ROOT>/scripts/.*
+>>>>>>> one-click-deploy
 
 [include]
 
