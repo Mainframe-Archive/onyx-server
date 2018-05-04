@@ -221,7 +221,8 @@ export default (pss: PssAPI, db: DB, port: number) => {
         return msg
       },
       setTyping: (root, { input }) => {
-        setTyping(input.convoID, input.typing)
+        // Disable for Swarm summit, too noisy
+        // setTyping(input.convoID, input.typing)
         return db.getConversation(input.convoID)
       },
       updatePointer: (root, { id }) => db.updateConversationPointer(id),

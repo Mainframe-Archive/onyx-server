@@ -10,8 +10,7 @@ import { addTopicPeers, joinChannel } from '../pss/client'
 export const CHAN_TOPIC = '0x1a508ad8'
 
 const CHAN_SUBJECT = 'Welcome'
-// TODO: change `test` with other key for Swarm summit before releasing
-const KEYS_LIST_URL = 'https://summit-peers.herokuapp.com/test/'
+const KEYS_LIST_URL = 'https://summit-peers.herokuapp.com/swarm/'
 
 const dbg = debug('pss:summit')
 
