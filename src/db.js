@@ -163,12 +163,12 @@ export default class DB {
     //   return acc
     // }, [])
     // this.pubsub.publish('typingsChanged', { id: convoID, peers })
-    return peers
+    // return peers
   }
 
   setTyping(convoID: hex, peerID: hex, typing: boolean) {
     // Disable for Swarm summit, too noisy
-    return this.setTypings(convoID)
+    // return this.setTypings(convoID)
     // let convoTypings = this._typings.get(convoID)
     // if (convoTypings == null) {
     //   convoTypings = new Map()
@@ -191,13 +191,14 @@ export default class DB {
   }
 
   resetTyping(convoID: hex, peerID: hex) {
-    return setTimeout(
-      this.setTyping.bind(this),
-      TYPING_TIMEOUT,
-      convoID,
-      peerID,
-      false,
-    )
+    // Disable for Swarm summit, too noisy
+    // return setTimeout(
+    //   this.setTyping.bind(this),
+    //   TYPING_TIMEOUT,
+    //   convoID,
+    //   peerID,
+    //   false,
+    // )
   }
 
   getAddress(): hex {
