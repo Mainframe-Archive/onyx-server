@@ -153,48 +153,52 @@ export default class DB {
   }
 
   setTypings(convoID: hex, convoTypings: ConvoTypings) {
-    this._typings.set(convoID, convoTypings)
-    const peers = Array.from(convoTypings.keys()).reduce((acc, id) => {
-      const contact = this.getContact(id)
-      if (contact) {
-        acc.push(contact)
-      }
-      return acc
-    }, [])
-    this.pubsub.publish('typingsChanged', { id: convoID, peers })
-    return peers
+    // Disable for Swarm summit, too noisy
+    // this._typings.set(convoID, convoTypings)
+    // const peers = Array.from(convoTypings.keys()).reduce((acc, id) => {
+    //   const contact = this.getContact(id)
+    //   if (contact) {
+    //     acc.push(contact)
+    //   }
+    //   return acc
+    // }, [])
+    // this.pubsub.publish('typingsChanged', { id: convoID, peers })
+    // return peers
   }
 
   setTyping(convoID: hex, peerID: hex, typing: boolean) {
-    let convoTypings = this._typings.get(convoID)
-    if (convoTypings == null) {
-      convoTypings = new Map()
-      if (typing) {
-        convoTypings.set(peerID, this.resetTyping(convoID, peerID))
-        return this.setTypings(convoID, convoTypings)
-      } // Otherwise nothing to do
-    } else {
-      // Discard existing timer if set
-      const peerTimer = convoTypings.get(peerID)
-      if (peerTimer != null) {
-        clearTimeout(peerTimer)
-        convoTypings.delete(peerID)
-      }
-      if (typing) {
-        convoTypings.set(peerID, this.resetTyping(convoID, peerID))
-      }
-      return this.setTypings(convoID, convoTypings)
-    }
+    // Disable for Swarm summit, too noisy
+    // return this.setTypings(convoID)
+    // let convoTypings = this._typings.get(convoID)
+    // if (convoTypings == null) {
+    //   convoTypings = new Map()
+    //   if (typing) {
+    //     convoTypings.set(peerID, this.resetTyping(convoID, peerID))
+    //     return this.setTypings(convoID, convoTypings)
+    //   } // Otherwise nothing to do
+    // } else {
+    //   // Discard existing timer if set
+    //   const peerTimer = convoTypings.get(peerID)
+    //   if (peerTimer != null) {
+    //     clearTimeout(peerTimer)
+    //     convoTypings.delete(peerID)
+    //   }
+    //   if (typing) {
+    //     convoTypings.set(peerID, this.resetTyping(convoID, peerID))
+    //   }
+    //   return this.setTypings(convoID, convoTypings)
+    // }
   }
 
   resetTyping(convoID: hex, peerID: hex) {
-    return setTimeout(
-      this.setTyping.bind(this),
-      TYPING_TIMEOUT,
-      convoID,
-      peerID,
-      false,
-    )
+    // Disable for Swarm summit, too noisy
+    // return setTimeout(
+    //   this.setTyping.bind(this),
+    //   TYPING_TIMEOUT,
+    //   convoID,
+    //   peerID,
+    //   false,
+    // )
   }
 
   getAddress(): hex {
