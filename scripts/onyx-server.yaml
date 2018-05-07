@@ -17,6 +17,7 @@ Parameters:
     Description: Choose the password that will be used to protect the client certificate
     Type: String
     NoEcho: Yes
+    AllowedPattern: ".+"
 
   VPC:
     Description: Choose which VPC this Onyx server should be deployed to
