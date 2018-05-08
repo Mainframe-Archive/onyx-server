@@ -70,7 +70,7 @@ export const subscribeToStoredConvos = async (pss: PssAPI, db: DB) => {
         }
         const profile = db.getProfile()
         if (profile) {
-          const peers = c.peers.reduce((acc, p) => {
+          const peers = c.peers.filter(Boolean).reduce((acc, p) => {
             if (p.profile && p.profile.id !== profile.id) {
               const address = p.address || '0x'
               acc.push({
@@ -436,6 +436,58 @@ export const joinChannel = async (
   })
 
   return { topic, topicSubscription }
+}
+
+export const updateChannelPeers = async (
+  pss: PssAPI,
+  db: DB,
+  id: hex,
+  otherPeers: Array<hex>,
+) => {
+  const profile = db.getProfile()
+  if (profile == null) {
+    throw new Error('Cannot update channel before profile is setup')
+  }
+
+  const topic = topics.get(id)
+  if (topic == null) {
+    throw new Error('Channel not found: ' + id)
+  }
+
+  logClient('update channel peers', id)
+
+  await Promise.all(
+    otherPeers.map(async pubKey => {
+      const contact = db.getContact(pubKey)
+      try {
+        await pss.setPeerPublicKey(
+          pubKey,
+          id,
+          (contact && contact.address) || '0x',
+        )
+        topic.addPeer(pubKey)
+        if (contact == null) {
+          db.setContact({
+            address: '0x',
+            profile: { id: pubKey, hasStake: true },
+          })
+          topic.toPeer(pubKey, profileRequest())
+        }
+        if (contact != null && !contact.profile.hasStake) {
+          db.setContactStake(pubKey, true)
+        }
+      } catch (err) {
+        if (err.message.includes('No stake found')) {
+          db.setContactStake(pubKey, false)
+        } else {
+          throw err
+        }
+      }
+    }),
+  )
+
+  logClient('updateChannelPeers send topicJoined')
+  topic.next(topicJoined(db.getProfile(), db.getAddress()))
 }
 
 export const createChannel = async (
