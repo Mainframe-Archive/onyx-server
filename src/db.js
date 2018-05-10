@@ -195,12 +195,13 @@ export default class DB {
   }
 
   setProfile(profile: Profile) {
-    profile.hasStake = true
     this._store.set('state.profile', profile)
   }
 
   getProfile(): ?Profile {
-    return this._store.get('state.profile')
+    const profile = this._store.get('state.profile')
+    profile.hasStake = true
+    return profile
   }
 
   deleteContactRequest(id: hex) {
