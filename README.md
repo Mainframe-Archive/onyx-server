@@ -71,7 +71,7 @@ You're connected!
 
 ### Development
 
-To build local version run `yarn start`. Afterwards you can start the built server
+To build local version run `yarn`. Afterwards you can start the built server
 from `./bin/onyx-server`.
 
 Onyx server depends on having a local swarm node running. You can start it by running
