@@ -1,0 +1,336 @@
+Description: >
+  This template deploys an Onyx Server.
+
+Parameters:
+
+  InstanceType:
+    Description: Which instance type should we use for the Onyx Server
+    Type: String
+    Default: t2.micro
+
+  ResourcePrefix:
+    Description: A prefix that will be added to all to resource names. Setup multiple servers by using different prefixes for each one.
+    Type: String
+    Default: default
+
+  CertificatePassword:
+    Description: Choose the password that will be used to protect the client certificate
+    Type: String
+    NoEcho: Yes
+    AllowedPattern: ".+"
+
+  VPC:
+    Description: Choose which VPC this Onyx server should be deployed to
+    Type: AWS::EC2::VPC::Id
+
+Mappings:
+
+  # These are the latest Amazon Linux AMIs as of April 14th, 2018:
+
+  # You can find the latest available on this page of our documentation:
+  # https://aws.amazon.com/amazon-linux-ami/
+
+  AWSRegionToAMI:
+    us-east-2:
+      AMI: ami-f63b1193
+    us-east-1:
+      AMI: ami-97785bed
+    us-west-2:
+      AMI: ami-f2d3638a
+    us-west-1:
+      AMI: ami-824c4ee2
+    eu-west-3:
+      AMI: ami-8ee056f3
+    eu-west-2:
+      AMI: ami-403e2524
+    eu-west-1:
+      AMI: ami-d834aba1
+    eu-central-1:
+      AMI: ami-5652ce39
+    ap-northeast-2:
+      AMI: ami-863090e8
+    ap-northeast-1:
+      AMI: ami-ceafcba8
+    ap-southeast-2:
+      AMI: ami-942dd1f6
+    ap-southeast-1:
+      AMI: ami-68097514
+    ca-central-1:
+      AMI: ami-a954d1cd
+    ap-south-1:
+      AMI: ami-531a4c3c
+    sa-east-1:
+      AMI: ami-84175ae8
+
+Resources:
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+
+  LambdaPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - LambdaRole
+    Properties:
+      PolicyName: CFNCustomSecretProviderPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:CreateAccessKey
+              - iam:DeleteAccessKey
+              - iam:UpdateAccessKey
+              - ssm:PutParameter
+              - ssm:GetParameter
+              - ssm:DeleteParameter
+              - ec2:ImportKeyPair
+              - ec2:DeleteKeyPair
+            Resource:
+              - '*'
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+            Resource:
+              - '*'
+          - Action:
+              - logs:*
+            Resource: arn:aws:logs:*:*:*
+            Effect: Allow
+      Roles:
+        - !Ref 'LambdaRole'
+
+  CFNSecretProvider:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaPolicy
+    Properties:
+      Description: CloudFormation Custom:Secret implementation
+      Code:
+        S3Bucket: !Sub 'binxio-public-${AWS::Region}'
+        S3Key: lambdas/cfn-secret-provider-0.11.0.zip
+      Handler: secrets.handler
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt 'LambdaRole.Arn'
+      Runtime: python2.7
+
+  PrivateKey:
+    Type: Custom::RSAKey
+    DependsOn: CFNSecretProvider
+    Properties:
+      Name: !Sub '/mainframe/${ResourcePrefix}-onyx-private-key'
+      KeyAlias: alias/aws/ssm
+      ServiceToken: !Join
+        - ":"
+        - - arn:aws:lambda
+          - !Ref "AWS::Region"
+          - !Ref "AWS::AccountId"
+          - !Ref CFNSecretProvider
+
+  CustomKeyPair:
+    Type: Custom::KeyPair
+    DependsOn:
+      - CFNSecretProvider
+      - PrivateKey
+    Properties:
+      Name: !Sub '${ResourcePrefix}CustomKeyPair'
+      PublicKeyMaterial: !GetAtt
+        - PrivateKey
+        - PublicKey
+      ServiceToken: !Join
+        - ":"
+        - - arn:aws:lambda
+          - !Ref "AWS::Region"
+          - !Ref "AWS::AccountId"
+          - !Ref CFNSecretProvider
+
+  CertBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: BucketOwnerFullControl
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+     - CertBucket
+     - CustomKeyPair
+     - InstanceProfile
+    Properties:
+      IamInstanceProfile: !Ref InstanceProfile
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
+      KeyName: !Sub '${ResourcePrefix}CustomKeyPair'
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref InstanceSecurityGroup
+      Tags:
+        -
+          Key: Name
+          Value: !Sub ${ResourcePrefix}-onyx-server
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash
+
+          cd /root
+          . /root/.bash_profile
+          export HOME=/root
+
+          curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+          . /root/.nvm/nvm.sh
+          nvm install --lts
+          nvm use --lts
+          node -e "console.log('Running Node.js ' + process.version)" > /root/node-version.txt
+
+          # Checkout repo
+          yum -y install git jq golang
+          git clone https://github.com/MainframeHQ/onyx-server.git
+          cd onyx-server
+
+          passphrase='${CertificatePassword}'
+          hostname=`curl http://169.254.169.254/latest/meta-data/public-hostname`
+
+          # Generate certificates
+          ./scripts/gen-certs.sh -p $passphrase -d $hostname
+
+          # Copy certificates to S3
+          aws s3 cp /root/onyx-server/certs/ca-crt.pem s3://${CertBucket}/
+          aws s3 cp /root/onyx-server/certs/client-crt.pem s3://${CertBucket}/
+          aws s3 cp /root/onyx-server/certs/client-key.pem s3://${CertBucket}/
+
+          # Make sure Onyx server will start on reboot
+          echo "logfile=/root/onyx-logfile" >> /etc/rc.local
+          echo "rm -f $logfile" >> /etc/rc.local
+          echo "cd /root/onyx-server" >> /etc/rc.local
+          echo './scripts/start_swarm_node.sh datadir > $logfile 2>&1 &' >> /etc/rc.local
+          echo 'while [ `grep "WebSocket endpoint opened" $logfile|wc -l` -lt 1 ]' >> /etc/rc.local
+          echo 'do' >> /etc/rc.local
+          echo '  sleep 10' >> /etc/rc.local
+          echo 'done' >> /etc/rc.local
+          echo '. /root/.nvm/nvm.sh' >> /etc/rc.local
+          echo 'nvm use --lts' >> /etc/rc.local
+          echo 'cd /root/onyx-server' >> /etc/rc.local
+          echo './bin/onyx-server' >> /etc/rc.local
+
+          npm install -g yarn
+          yarn install
+          yarn start
+
+          # Now start Geth and Onyx
+          logfile=/root/onyx-logfile
+          rm -f $logfile
+          cd /root/onyx-server
+          ./scripts/start_swarm_node.sh datadir > $logfile 2>&1 &
+          while [ `grep "WebSocket endpoint opened" $logfile|wc -l` -lt 1 ]
+          do
+            sleep 10
+          done
+          . /root/.nvm/nvm.sh
+          nvm use --lts
+          cd /root/onyx-server
+          ./bin/onyx-server
+
+  # This IAM Role is attached to the EC2 instance, and allows it to write the certs to S3
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    DependsOn: CertBucket
+    Properties:
+      Path: /
+      RoleName: !Sub ${ResourcePrefix}-InstanceRole-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+      Policies:
+        -
+          PolicyName: s3write
+          PolicyDocument:
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "s3:ListAllMyBuckets"
+                  - "s3:HeadBucket"
+                  - "s3:ListObjects"
+                Resource: "*"
+              -
+                Effect: Allow
+                Action: "s3:*"
+                Resource:
+                  - !Join
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref CertBucket
+                      - "/*"
+                  - !Join
+                    - ""
+                    - - "arn:aws:s3:::"
+                      - !Ref CertBucket
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn: InstanceRole
+    Properties:
+      Path: /
+      Roles:
+        - !Ref InstanceRole
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${ResourcePrefix}-SG
+      GroupDescription: Allow Onyx traffic types
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 30399
+          ToPort: 30399
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 30399
+          ToPort: 30399
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5002
+          ToPort: 5002
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+
+  CertBucketName:
+    Description: The S3 bucket where your certificates are stored.
+    Value: !Ref CertBucket
+
+  EC2Hostname:
+    Description: Paste the following URL into your Onyx client
+    Value: !Join
+     - ""
+     - - "wss://"
+       - !GetAtt EC2Instance.PublicDnsName
+       - ":5000/graphql"
