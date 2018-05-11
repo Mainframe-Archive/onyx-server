@@ -47,8 +47,8 @@ For convenience, you can use the provided script to generate a set of unique sel
 
 ### Development
 
-To build local version run `yarn`. Afterwards you can start the built server
-from `./bin/onyx-server`.
+To build local version run `yarn build`. Afterwards you can start the built server
+with `yarn start`.
 
 Onyx server depends on having a local swarm node running. You can start it by running
 the `start_swarm_node.sh` script. This should allow you to run `onyx-server` with
