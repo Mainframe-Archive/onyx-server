@@ -62,7 +62,6 @@ in one shell:
 in another shell:
 ```sh
 yarn start
-./bin/onyx-server
 ```
 
 ### API
