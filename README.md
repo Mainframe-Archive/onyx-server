@@ -45,28 +45,6 @@ For convenience, you can use the provided script to generate a set of unique sel
 ./scripts/gen-certs.sh -p <certificate-password> -i <ip-address-to-certify> -d <domain-to-certify>
 ```
 
-## Setting up an Onyx server on AWS
-
-The easiest way to deploy this is with our AWS CloudFormation template. To do
-this, just click on the link below.
-
-[![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=OnyxServer&templateURL=https://s3.amazonaws.com/mainframe-cf-templates/onyx-server.yaml)
-
-### Fetch the certificates from the new AWS stack
-
-In order to connect to the server, the client will need to use the right
-certificates - otherwise the connection will be rejected. They are generated on
-the server and you need to fetch them first. If you look at the resources of your
-AWS stack, one of them should be a link to the S3 bucket where your certs are
-stored. Clicking the link will take you to a page where you can download those
-from the AWS console.
-
-Under your stack outputs, you will see the URL you will use to connect your Onyx
-client to the server. It should begin with *wss://*. Copy that and paste it into
-your client on startup when it asks you for `Onyx server websocket url`. Then,
-when prompted, select and upload the three cert/key files you just downloaded
-from the AWS console. You are now connected!
-
 ### Development
 
 To build local version run `yarn`. Afterwards you can start the built server
