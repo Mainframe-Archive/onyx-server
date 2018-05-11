@@ -6,12 +6,18 @@ Mailboxing & data service for the [Onyx](https://github.com/MainframeHQ/onyx) ap
 
 [Node](https://nodejs.org/en/) v8+ with [npm](https://www.npmjs.com/).
 
+## Installation
+
+```sh
+npm install --global onyx-server
+```
+
 ## Usage
 
 ### CLI
 
 ```sh
-./bin/onyx-server --port 5000 --http-url http://localhost:8500 --ws-url ws://localhost:8546
+onyx-server --port 5000 --http-url http://localhost:8500 --ws-url ws://localhost:8546
 ```
 
 All arguments are optional, when not provided the server will use environment
@@ -25,7 +31,7 @@ for when connecting client and server over a local connection
 The `DEBUG` environment variable can be used to activate logs, ex:
 
 ```sh
-DEBUG="onyx*" ./bin/onyx-server
+DEBUG="onyx*" onyx-server
 ```
 
 ### Connection security
@@ -60,14 +66,6 @@ client to the server. It should begin with *wss://*. Copy that and paste it into
 your client on startup when it asks you for `Onyx server websocket url`. Then,
 when prompted, select and upload the three cert/key files you just downloaded
 from the AWS console. You are now connected!
-
-#### 6. Connect to your Onyx server
-
-Launch Onyx and as the `Onyx server websocket url` use
-`wss://<NODE PUBLIC IP HERE>:5000/graphql`. When prompted for the certificates
-use the one you downloaded in the previous step.
-
-You're connected!
 
 ### Development
 
