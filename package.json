@@ -55,5 +55,10 @@
     "flow-copy-source": "^1.2.1",
     "prettier": "^1.11.1"
   },
-  "files": ["bin/*", "lib/*", "scripts/*", "cert-configs/*"]
+  "files": [
+    "bin/*",
+    "lib/*",
+    "scripts/*",
+    "cert-configs/*"
+  ]
 }
