@@ -47,7 +47,7 @@ $GODIR/build/bin/swarm \
     --password $DATADIR/password \
     --verbosity 4 \
     --bzzaccount $KEY \
-    --ens-api 'https://ropsten.infura.io/55HkPWVAJQjGH4ucvfW9' \
+    --ens-api 'https://mainnet.infura.io/55HkPWVAJQjGH4ucvfW9' \
     --bzznetworkid 1000 \
     --nosync \
     --bootnodes enode://b3417a20b07104ce2f948d7458fc03c73ad5918ae6be24eaf840322c70ffa8d0f59473139bef8ef0b4caffe7bc99018ab3686b1a757d73c1a7bfd880d2b7e7ef@52.31.117.198:30399,enode://762d482f6a400c89210be4d180b192dd5f921ca9f1a42a1651293f242613874f3e4e22589be582e0837c816c0c5366c00c32b7760ca345d65eb9ed75897db8c0@54.153.70.43:30399,enode://fc8d3eb2d5cfe4ed05c9e722518c895e006456448a49c2915e30beffd1ddb1ee17cd12abd550f1745d8b17060bf6c46e822e051ae4deca0e21d7fa7a15bb4c43@13.113.67.30:30399 \
